@@ -1,1 +1,1837 @@
-# die-letzte-Auswaertsfahrt
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Letztes Bully, letzter Putt</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap');
+
+/* ============================================================
+   FARBEN: Eis (blau/weiss), Fairway (grün), Bier (gold), Puck (schwarz)
+   ============================================================ */
+:root {
+  --gold:  #F5B800;   /* Bier */
+  --puck:  #1C2833;   /* Puck / Schläger */
+  --grass: #3C8D3A;   /* Fairway */
+  --rink:  #0B3D91;   /* Eisfeld-Blau (Titel, Akzente) */
+  --red:   #C8102E;   /* Torlinie / Strafe */
+  --ice:   #F4FAFD;   /* Karten-Hintergrund */
+  --dark:  #13202B;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Nunito',sans-serif;background:linear-gradient(180deg,#d6ecf8 0%,#eef8fd 38%,#b9dfa5 72%,#8cc66f 100%);min-height:100vh;color:var(--dark);}
+
+/* SYNC STATUS */
+.sync-bar{max-width:680px;margin:8px auto 0;text-align:right;padding:0 16px;font-size:11px;font-weight:700;color:#888;}
+.sync-ok{color:var(--grass);}
+.sync-err{color:#e74c3c;}
+.sync-loading{color:#f39c12;}
+
+/* HEADER */
+.hdr{background:linear-gradient(135deg,var(--rink),#061f4d);padding:26px 20px 20px;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,0.3);border-bottom:6px solid var(--red);}
+.hdr-deco{font-size:2.2rem;margin-bottom:8px;}
+.hdr-title{font-family:'Fredoka One',cursive;font-size:clamp(1.5rem,5vw,2.6rem);color:var(--gold);text-shadow:3px 3px 0 rgba(0,0,0,0.4);line-height:1.2;}
+.hdr-sub{font-size:clamp(0.78rem,2.5vw,0.95rem);color:rgba(255,255,255,0.88);margin-top:5px;font-weight:600;}
+
+/* INTRO */
+.intro-card{max-width:680px;margin:22px auto 0;background:var(--ice);border-radius:20px;padding:20px 24px;box-shadow:0 5px 20px rgba(0,0,0,0.13);border:3px solid var(--rink);font-size:15px;line-height:1.75;color:var(--dark);}
+#introText{white-space:pre-line;overflow-wrap:anywhere;}
+.ai{white-space:pre-wrap;overflow-wrap:anywhere;}
+.node-title,.modal-title,.modal-desc,.penalty-info,.pending-info{overflow-wrap:anywhere;}
+.modal-desc{white-space:pre-line;}
+.intro-img{max-width:680px;margin:18px auto 0;display:block;width:100%;border-radius:20px;border:3px solid var(--rink);box-shadow:0 5px 20px rgba(0,0,0,0.13);}
+
+/* PROGRESS */
+.prog-wrap{max-width:680px;margin:16px auto 0;background:rgba(255,255,255,0.75);border-radius:14px;padding:14px 20px;backdrop-filter:blur(6px);box-shadow:0 3px 14px rgba(0,0,0,0.1);}
+.prog-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px;font-weight:800;font-size:14px;}
+.prog-bar-bg{background:rgba(0,0,0,0.1);border-radius:20px;height:13px;overflow:hidden;}
+.prog-bar{height:100%;border-radius:20px;background:linear-gradient(90deg,var(--rink),var(--grass),var(--gold));transition:width .6s ease;}
+.prog-stats{display:flex;gap:16px;margin-top:8px;justify-content:center;flex-wrap:wrap;}
+.prog-stat{display:flex;align-items:center;gap:5px;font-size:12px;font-weight:800;padding:3px 10px;border-radius:20px;}
+.prog-stat-green{background:rgba(60,141,58,.15);color:var(--grass);border:1px solid rgba(60,141,58,.3);}
+.prog-stat-red{background:rgba(200,16,46,.12);color:var(--red);border:1px solid rgba(200,16,46,.3);}
+.prog-stat-gray{background:rgba(0,0,0,.07);color:#888;border:1px solid rgba(0,0,0,.1);}
+
+/* GETRÄNKE-TRACKER */
+.drinks-wrap{max-width:680px;margin:12px auto 0;background:rgba(255,255,255,0.85);border-radius:16px;padding:16px 20px;backdrop-filter:blur(6px);box-shadow:0 3px 14px rgba(0,0,0,0.1);border:2px solid var(--gold);}
+.drinks-title{font-family:'Fredoka One',cursive;font-size:1rem;color:var(--rink);margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.drinks-cols{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.drinks-col-head{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.8px;color:#888;margin-bottom:6px;display:flex;align-items:center;gap:4px;}
+.drink-row,.drink-consumed-row{display:flex;flex-wrap:nowrap;align-items:center;justify-content:space-between;gap:6px;padding:5px 9px;border-radius:9px;background:rgba(0,0,0,0.04);margin-bottom:4px;font-size:13px;font-weight:700;min-height:30px;}
+.drink-consumed-row{opacity:0.7;}
+.drink-label{display:flex;align-items:center;gap:5px;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
+.drink-consumed-row .drink-label{color:#999;}
+.drink-count{background:var(--gold);color:var(--dark);border-radius:20px;padding:2px 9px;font-size:12px;font-weight:800;min-width:28px;text-align:center;flex-shrink:0;}
+.drink-consumed-row .drink-count{background:rgba(0,0,0,0.08);color:#999;}
+.drink-consume-btn{background:var(--grass);color:#fff;border:none;border-radius:7px;padding:3px 8px;font-size:11px;font-weight:800;cursor:pointer;font-family:'Nunito',sans-serif;transition:all .15s;flex-shrink:0;white-space:nowrap;}
+.drink-consume-btn:hover{background:#2c6b2a;transform:scale(1.07);}
+.drinks-empty{font-size:12px;color:#bbb;text-align:center;padding:8px 0;font-weight:700;}
+
+/* BONUS-AUFGABE */
+.bonus-wrap{max-width:680px;margin:12px auto 0;padding:0 16px;}
+.bonus-card{background:linear-gradient(135deg,rgba(255,244,191,.96),rgba(245,200,70,.96));border:3px solid #c99a00;border-radius:18px;padding:18px 20px;box-shadow:0 5px 20px rgba(120,85,0,.2);color:#4a3500;}
+.bonus-card h2{font-family:'Fredoka One',cursive;color:#7a5600;font-size:1.2rem;margin-bottom:8px;}
+.bonus-card p{font-size:13px;line-height:1.6;margin-bottom:12px;color:#5d4700;white-space:pre-line;}
+.bonus-skipped{border-color:var(--red);background:linear-gradient(135deg,rgba(200,16,46,.16),rgba(150,10,30,.16));}
+.bonus-status{font-size:13px;font-weight:800;padding:9px 12px;border-radius:10px;background:rgba(255,255,255,.35);color:#5d4700;margin-bottom:10px;white-space:pre-line;}
+
+/* MINI-CHALLENGES */
+.mini-wrap{max-width:680px;margin:12px auto 0;padding:0 16px;}
+.mini-card{background:linear-gradient(135deg,rgba(11,61,145,.95),rgba(6,31,77,.95));border:3px solid #78b9ff;border-radius:18px;padding:18px 20px;box-shadow:0 5px 20px rgba(0,0,0,.2);color:#fff;}
+.mini-card h2{font-family:'Fredoka One',cursive;color:#ffe58a;font-size:1.2rem;margin-bottom:8px;}
+.mini-card p{font-size:13px;line-height:1.6;margin-bottom:10px;color:rgba(255,255,255,.92);}
+.mini-meta{font-size:12px;font-weight:800;background:rgba(255,255,255,.12);border-radius:10px;padding:9px 12px;margin:8px 0 12px;}
+.mini-timer{font-family:'Fredoka One',cursive;font-size:1.55rem;color:#ffe58a;text-align:center;margin:10px 0;}
+.mini-result-loss{border-color:#e74c3c;background:linear-gradient(135deg,rgba(150,40,40,.92),rgba(90,20,20,.92));}
+.mini-admin-row{border:1px solid rgba(0,0,0,.1);border-radius:12px;padding:12px;margin-bottom:12px;background:rgba(0,0,0,.03);}
+.mini-public-input{width:100%;padding:11px 13px;border-radius:10px;border:1.5px solid rgba(255,255,255,.35);background:rgba(255,255,255,.12);color:#fff;font-size:16px;font-family:'Nunito',sans-serif;margin-bottom:9px;display:block;}
+.mini-public-input::placeholder{color:rgba(255,255,255,.65);}
+textarea.mini-public-input{resize:vertical;min-height:64px;}
+
+/* QUIZ OVERLAY (Golf = grün, Eishockey = blau) */
+.quiz-overlay{position:fixed;inset:0;z-index:7000;overflow-y:auto;display:none;color:#fff;}
+.quiz-overlay.golf{background:linear-gradient(160deg,#1a472a 0%,#2d6a27 40%,#1a3a1a 100%);}
+.quiz-overlay.hockey{background:linear-gradient(160deg,#061f4d 0%,#0B3D91 45%,#04142f 100%);}
+.quiz-overlay.active{display:block;}
+.quiz-inner{max-width:720px;margin:0 auto;padding:20px 16px 60px;}
+.quiz-hdr{position:sticky;top:0;z-index:5;background:rgba(0,0,0,.45);padding:18px 20px;text-align:center;border-bottom:4px solid var(--gold);box-shadow:0 4px 20px rgba(0,0,0,.5);backdrop-filter:blur(4px);}
+.quiz-hdr-title{font-family:'Fredoka One',cursive;font-size:clamp(1.3rem,5vw,2rem);color:var(--gold);}
+.quiz-close{position:absolute;right:14px;top:12px;background:rgba(255,255,255,.12);border:0;border-radius:8px;color:#fff;font-size:1.3rem;padding:4px 10px;cursor:pointer;}
+.qscreen{display:none;}.qscreen.active{display:block;}
+.q-setup,.q-result{background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.15);border-radius:20px;padding:24px;margin-top:20px;}
+.q-setup h2{font-family:'Fredoka One',cursive;color:var(--gold);margin-bottom:14px;}
+.q-players,.q-result-scores{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.q-player{border-radius:14px;padding:14px;text-align:center;}.q-player.p1{background:rgba(21,101,192,.25);border:2px solid #1565c0;}.q-player.p2{background:rgba(198,40,40,.25);border:2px solid #c62828;}
+.q-player label{font-size:11px;font-weight:800;text-transform:uppercase;color:rgba(255,255,255,.7);display:block;margin-bottom:5px;}
+.q-turn{border-radius:14px;padding:14px;text-align:center;font-family:'Fredoka One',cursive;font-size:1.1rem;margin-bottom:14px;}.q-turn.p1{background:rgba(21,101,192,.35);border:2px solid #1565c0;}.q-turn.p2{background:rgba(198,40,40,.35);border:2px solid #c62828;}
+.q-score{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;margin-bottom:14px;}.q-score-box{text-align:center;border-radius:12px;padding:10px;}.q-score-box.p1{background:rgba(21,101,192,.25);border:2px solid #1565c0;}.q-score-box.p2{background:rgba(198,40,40,.25);border:2px solid #c62828;}.q-points{font-family:'Fredoka One',cursive;color:var(--gold);font-size:2rem;}.q-detail{font-size:11px;opacity:.7;}.q-vs{font-family:'Fredoka One',cursive;color:rgba(255,255,255,.5);}
+.q-progress{font-size:12px;font-weight:800;color:rgba(255,255,255,.7);margin-bottom:8px;}.q-bar-bg{height:7px;background:rgba(255,255,255,.12);border-radius:20px;margin-bottom:14px;}.q-bar{height:100%;background:linear-gradient(90deg,var(--gold),var(--grass));border-radius:20px;transition:width .3s;}
+.q-timer{display:flex;align-items:center;gap:10px;margin-bottom:14px;}.q-circle{width:50px;height:50px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;border:3px solid rgba(255,255,255,.2);}.q-timer-bar{flex:1;height:10px;background:rgba(255,255,255,.12);border-radius:20px;overflow:hidden;}.q-timer-fill{height:100%;transition:width .1s;}
+.q-question{background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.14);border-radius:16px;padding:20px;margin-bottom:12px;}.q-label{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--gold);font-weight:800;margin-bottom:7px;}.q-text{font-size:1rem;font-weight:800;line-height:1.5;}
+.q-answers{display:grid;grid-template-columns:1fr 1fr;gap:9px;}.q-answer{background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.15);border-radius:12px;color:#fff;padding:13px;text-align:left;font-weight:700;cursor:pointer;line-height:1.4;font-family:'Nunito',sans-serif;font-size:14px;}.q-answer:hover:not(:disabled){border-color:var(--gold);background:rgba(255,255,255,.16);}.q-answer:disabled{cursor:default;}.q-answer.correct{background:rgba(60,141,58,.45);border-color:#5fbf5c;}.q-answer.selected-wrong{background:rgba(198,40,40,.45);border-color:#c62828;}
+.q-feedback{border-radius:11px;padding:11px;text-align:center;font-weight:800;margin-top:12px;font-size:13px;}.q-feedback.ok{background:rgba(60,141,58,.3);border:2px solid #5fbf5c;}.q-feedback.bad{background:rgba(198,40,40,.3);border:2px solid #c62828;}.q-feedback.timeout{background:rgba(245,184,0,.2);border:2px solid var(--gold);}
+.q-handoff{text-align:center;padding:80px 20px;}.q-result{text-align:center;}.q-result h2{font-family:'Fredoka One',cursive;font-size:2rem;margin-bottom:8px;}.q-result-box{border-radius:14px;padding:14px;}.q-result-box.p1{background:rgba(21,101,192,.3);border:2px solid #1565c0;}.q-result-box.p2{background:rgba(198,40,40,.3);border:2px solid #c62828;}.q-result-box.winner{box-shadow:0 0 0 3px var(--gold);}.q-result-points{font-family:'Fredoka One',cursive;color:var(--gold);font-size:2.5rem;}
+.q-rounds-overview{margin-top:18px;text-align:left;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:12px;}
+.q-round-row{display:grid;grid-template-columns:52px 1fr 1fr;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.08);font-size:12px;color:rgba(255,255,255,.86);}
+.q-round-row:last-child{border-bottom:0;}
+.q-round-head{font-weight:800;color:rgba(255,255,255,.55);text-transform:uppercase;font-size:10px;letter-spacing:.5px;}
+.q-round-player{border-radius:8px;padding:5px 7px;background:rgba(255,255,255,.06);line-height:1.35;}
+.q-round-player.right{background:rgba(60,141,58,.22);border:1px solid rgba(60,141,58,.5);}
+.q-round-player.wrong{background:rgba(198,40,40,.18);border:1px solid rgba(198,40,40,.4);}
+.q-round-player.bonus{box-shadow:inset 0 0 0 2px var(--gold);}
+.q-btn{border:0;border-radius:10px;padding:10px 18px;font-weight:800;cursor:pointer;font-family:'Nunito',sans-serif;margin-top:12px;}.q-btn-gold{background:var(--gold);color:var(--dark);}.q-btn-gray{background:rgba(255,255,255,.14);color:#fff;border:1px solid rgba(255,255,255,.2);}.q-btn-red{background:#c62828;color:#fff;}
+
+/* ROADMAP */
+.road-outer{max-width:680px;margin:24px auto 40px;padding:0 16px;}
+.road{position:relative;padding:10px 0;}
+.road-line{position:absolute;left:50%;top:0;bottom:0;width:6px;transform:translateX(-50%);background:repeating-linear-gradient(to bottom,var(--red) 0,var(--red) 18px,transparent 18px,transparent 30px);border-radius:3px;z-index:0;opacity:.75;}
+
+/* NODE */
+.task-node{display:flex;align-items:flex-start;gap:14px;margin-bottom:24px;position:relative;z-index:1;}
+.task-node:nth-child(odd){flex-direction:row;}
+.task-node:nth-child(even){flex-direction:row-reverse;}
+.node-bubble{flex-shrink:0;width:62px;height:62px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.9rem;border:4px solid #fff;box-shadow:0 4px 14px rgba(0,0,0,0.25);cursor:pointer;transition:transform .2s,box-shadow .2s;position:relative;z-index:2;}
+.node-bubble:hover:not(.b-locked){transform:scale(1.12);box-shadow:0 6px 20px rgba(0,0,0,0.3);}
+.b-done{background:linear-gradient(135deg,var(--grass),#2c6b2a);}
+.b-penalty{background:linear-gradient(135deg,#e74c3c,#8B1A1A);}
+.b-pending{background:linear-gradient(135deg,#f39c12,#e67e22);animation:bob 1.8s infinite;}
+.b-active{background:linear-gradient(135deg,var(--gold),#d39e00);animation:bob 1.8s infinite;}
+.b-unlocked{background:linear-gradient(135deg,#d6ecf8,#9fcbe8);}
+.b-locked{background:#ccc;cursor:default;filter:grayscale(.5);}
+@keyframes bob{0%,100%{transform:translateY(0);}50%{transform:translateY(-6px);}}
+
+.node-card{flex:1;background:var(--ice);border-radius:15px;padding:13px 15px;box-shadow:0 4px 14px rgba(0,0,0,0.12);border:2px solid transparent;cursor:pointer;min-width:0;transition:border-color .2s;}
+.node-card:hover:not(.c-locked){border-color:var(--gold);}
+.c-done{border-color:var(--grass)!important;background:#f0fff4;}
+.c-penalty{border-color:#e74c3c!important;background:#fff5f5;}
+.c-pending{border-color:#f39c12!important;background:#fffbf0;}
+.c-active{border-color:var(--gold)!important;}
+.c-unlocked{border-color:#9fcbe8!important;}
+.c-locked{opacity:.5;cursor:default;}
+
+.node-num{font-size:10px;font-weight:800;color:#aaa;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px;}
+.node-title{font-family:'Fredoka One',cursive;font-size:1rem;color:var(--dark);margin-bottom:5px;}
+.node-chips{display:flex;flex-wrap:wrap;gap:6px;}
+.chip{display:inline-flex;align-items:center;gap:3px;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:700;}
+.ch-green{background:rgba(60,141,58,.15);color:var(--grass);border:1px solid rgba(60,141,58,.3);}
+.ch-yellow{background:rgba(245,184,0,.2);color:#7a5c00;border:1px solid rgba(245,184,0,.5);}
+.ch-blue{background:rgba(11,61,145,.1);color:var(--rink);border:1px solid rgba(11,61,145,.3);}
+.ch-orange{background:rgba(243,156,18,.15);color:#e67e22;border:1px solid rgba(243,156,18,.3);}
+.ch-gray{background:rgba(0,0,0,.07);color:#888;border:1px solid rgba(0,0,0,.1);}
+.ch-red{background:rgba(200,16,46,.15);color:var(--red);border:1px solid rgba(200,16,46,.3);}
+
+/* MODAL */
+.modal-bg{position:fixed;inset:0;z-index:8000;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(3px);}
+.modal{background:var(--ice);border-radius:22px;padding:26px 24px;max-width:480px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 16px 48px rgba(0,0,0,.35);position:relative;border:3px solid var(--rink);}
+.modal-close{position:absolute;top:12px;right:14px;background:none;border:none;font-size:1.4rem;cursor:pointer;color:#aaa;}
+.modal-cover{width:100%;max-height:190px;object-fit:cover;border-radius:13px;margin-bottom:14px;border:2px solid rgba(0,0,0,.07);}
+.modal-cover-ph{width:100%;height:130px;background:linear-gradient(135deg,#d6ecf8,#8cc66f);border-radius:13px;margin-bottom:14px;display:flex;align-items:center;justify-content:center;font-size:4rem;}
+.modal-title{font-family:'Fredoka One',cursive;font-size:1.4rem;color:var(--dark);margin-bottom:8px;}
+.modal-desc{font-size:14px;line-height:1.75;color:#444;margin-bottom:12px;}
+
+/* TIMER */
+.timer-row{display:flex;align-items:center;gap:12px;background:rgba(0,0,0,.06);border-radius:12px;padding:10px 14px;margin-bottom:12px;}
+.t-circle{width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;flex-shrink:0;}
+.t-pulse{animation:pulse .5s infinite alternate;}
+@keyframes pulse{from{opacity:1}to{opacity:.3}}
+
+/* PRIZE / PENALTY */
+.prize-box{background:linear-gradient(135deg,rgba(245,184,0,.2),rgba(60,141,58,.15));border:2px solid var(--gold);border-radius:13px;padding:14px;text-align:center;margin-top:12px;}
+.prize-box h3{font-family:'Fredoka One',cursive;color:var(--rink);margin-bottom:5px;}
+.prize-icon-big{font-size:2.8rem;margin-bottom:5px;}
+.penalty-info{background:rgba(200,16,46,.1);border:2px solid #e74c3c;border-radius:11px;padding:11px 14px;margin-top:10px;font-size:13px;color:var(--red);font-weight:700;}
+.pending-info{background:rgba(243,156,18,.12);border:2px solid #f39c12;border-radius:11px;padding:12px 14px;margin-bottom:12px;font-weight:700;color:#e67e22;text-align:center;}
+.status-ok{background:rgba(60,141,58,.15);border:2px solid var(--grass);border-radius:11px;padding:10px 14px;margin-bottom:12px;font-weight:700;color:var(--grass);text-align:center;}
+.status-penalty{background:rgba(200,16,46,.1);border:2px solid #e74c3c;border-radius:11px;padding:10px 14px;margin-bottom:12px;font-weight:700;color:var(--red);text-align:center;}
+.status-lock{background:rgba(0,0,0,.07);border-radius:11px;padding:10px 14px;margin-bottom:12px;font-weight:700;color:#999;text-align:center;}
+
+/* BUTTONS */
+.btn{display:inline-block;padding:10px 20px;border:none;border-radius:11px;cursor:pointer;font-size:14px;font-weight:800;font-family:'Nunito',sans-serif;transition:all .2s;line-height:1;}
+.btn:hover{transform:translateY(-2px);box-shadow:0 4px 14px rgba(0,0,0,.2);}
+.btn-green{background:linear-gradient(135deg,var(--grass),#2c6b2a);color:#fff;}
+.btn-rink{background:linear-gradient(135deg,var(--rink),#061f4d);color:#fff;}
+.btn-gray{background:rgba(0,0,0,.1);color:#555;}
+.btn-red{background:#e74c3c;color:#fff;}
+.btn-orange{background:linear-gradient(135deg,#f39c12,#e67e22);color:#fff;}
+.btn-sm{padding:6px 13px;font-size:12px;border-radius:8px;}
+
+/* OVERLAYS */
+.prize-overlay{position:fixed;inset:0;z-index:9998;background:rgba(10,70,20,.92);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;animation:fi .3s ease;}
+.pen-overlay{position:fixed;inset:0;z-index:9999;background:rgba(140,0,0,.92);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;animation:fi .3s ease;}
+@keyframes fi{from{opacity:0;transform:scale(1.05)}to{opacity:1;transform:scale(1)}}
+
+/* ADMIN */
+.admin-outer{max-width:680px;margin:30px auto 60px;padding:0 16px;}
+.acard{background:rgba(255,255,255,.9);border-radius:17px;padding:18px 20px;margin-bottom:14px;box-shadow:0 4px 16px rgba(0,0,0,.09);}
+.acard h2{font-family:'Fredoka One',cursive;color:var(--rink);margin-bottom:12px;font-size:1.15rem;}
+.al{display:block;font-size:11px;font-weight:800;color:#777;margin-bottom:3px;margin-top:9px;text-transform:uppercase;letter-spacing:.5px;}
+.ai{width:100%;background:rgba(0,0,0,.05);border:1.5px solid rgba(0,0,0,.14);border-radius:8px;padding:8px 11px;font-size:16px;font-family:'Nunito',sans-serif;color:var(--dark);margin-bottom:3px;}
+textarea.ai{resize:vertical;min-height:58px;}
+.alrow{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;}
+#loginBox{text-align:center;padding:10px 0 4px;}
+#loginBox input{padding:10px 13px;border-radius:10px;border:1.5px solid rgba(0,0,0,.18);font-size:16px;font-family:'Nunito',sans-serif;width:100%;max-width:220px;margin-right:6px;margin-bottom:8px;}
+.req-badge{display:inline-block;background:#e74c3c;color:#fff;border-radius:20px;padding:1px 7px;font-size:10px;font-weight:800;margin-left:5px;vertical-align:middle;}
+.req-card{background:rgba(243,156,18,.1);border:2px solid #f39c12;border-radius:13px;padding:14px 16px;margin-bottom:10px;}
+.req-card h4{font-family:'Fredoka One',cursive;color:#e67e22;margin-bottom:6px;}
+.drink-admin-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:6px;}
+.drink-admin-item{background:rgba(0,0,0,.04);border:1.5px solid rgba(0,0,0,.1);border-radius:9px;padding:8px 6px;text-align:center;}
+.drink-admin-item label{font-size:11px;font-weight:800;display:block;margin-top:4px;color:#555;}
+.drink-admin-item input[type=number]{width:54px;text-align:center;border:1.5px solid rgba(0,0,0,.15);border-radius:7px;padding:4px;font-size:16px;font-weight:800;font-family:'Nunito',sans-serif;background:#fff;}
+.penalty-drink-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:6px;}
+.penalty-drink-item{background:rgba(200,16,46,.06);border:1.5px solid rgba(200,16,46,.2);border-radius:9px;padding:8px 6px;text-align:center;}
+.penalty-drink-item label{font-size:11px;font-weight:800;display:block;margin-top:4px;color:var(--red);}
+.penalty-drink-item input[type=number]{width:54px;text-align:center;border:1.5px solid rgba(200,16,46,.3);border-radius:7px;padding:4px;font-size:16px;font-weight:800;font-family:'Nunito',sans-serif;background:#fff;}
+.consumed-admin-row{display:flex;align-items:center;justify-content:space-between;padding:7px 10px;border-radius:9px;background:rgba(0,0,0,.04);margin-bottom:5px;font-size:13px;font-weight:700;}
+.consumed-admin-controls{display:flex;align-items:center;gap:6px;}
+.consumed-admin-controls button{width:26px;height:26px;border:none;border-radius:6px;font-size:15px;font-weight:800;cursor:pointer;background:rgba(0,0,0,.1);color:#333;}
+.consumed-admin-controls .cnt{min-width:28px;text-align:center;font-weight:800;font-size:14px;}
+.quiz-admin{margin-top:14px;border:2px solid rgba(11,61,145,.25);background:rgba(11,61,145,.06);}
+.quiz-admin.golf{border-color:rgba(60,141,58,.35);background:rgba(60,141,58,.07);}
+
+.hidden{display:none!important;}
+.mt10{margin-top:10px;}.mt14{margin-top:14px;}.tc{text-align:center;}
+.divider{border:none;border-top:1.5px solid rgba(0,0,0,.09);margin:13px 0;}
+.confetti{position:fixed;top:-20px;width:10px;height:16px;z-index:10000;animation:confettiFall 2.8s linear forwards;}
+@keyframes confettiFall{0%{transform:translateY(0) rotate(0deg);opacity:1;}100%{transform:translateY(110vh) rotate(720deg);opacity:0;}}
+
+@media (max-width:480px){
+  .q-players,.q-answers,.q-result-scores,.drink-admin-grid,.penalty-drink-grid{grid-template-columns:1fr;}
+  #loginBox input{max-width:100%;margin-right:0;}
+  .drink-admin-item input[type=number],.penalty-drink-item input[type=number]{width:100%;}
+  .alrow{flex-direction:column;align-items:stretch;}
+  .alrow .btn{width:100%;text-align:center;}
+  .drinks-cols{grid-template-columns:1fr;gap:14px;}
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="hdr">
+  <div class="hdr-deco">🏒⛳🍺</div>
+  <div class="hdr-title">Letztes Bully, letzter Putt</div>
+  <div class="hdr-sub" id="hdrSub">Die letzte Fan-Reise – Endstation Hafen der Ehe ⚓</div>
+</div>
+
+<div class="sync-bar"><span id="syncStatus">⏳ Verbinde mit Datenbank…</span></div>
+
+<!-- INTRO / LEITFADEN -->
+<div class="intro-card"><div id="introText"></div></div>
+<img id="introImage" class="intro-img hidden" src="" alt="Intro Bild">
+
+<!-- PROGRESS -->
+<div class="prog-wrap">
+  <div class="prog-top">
+    <span>🗺️ Fan-Reise-Fortschritt</span>
+    <span id="progPct" style="color:var(--grass);">0%</span>
+  </div>
+  <div class="prog-bar-bg"><div class="prog-bar" id="progBar" style="width:0%"></div></div>
+  <div id="progLabel" style="font-size:12px;color:#777;margin-top:5px;text-align:center;"></div>
+  <div class="prog-stats" id="progStats"></div>
+</div>
+
+<!-- GETRÄNKE -->
+<div class="drinks-wrap">
+  <div class="drinks-title">🍺 Getränke-Übersicht 🍺</div>
+  <div class="drinks-cols">
+    <div>
+      <div class="drinks-col-head">🏆 Erspielte Getränke</div>
+      <div id="drinksTodo"></div>
+    </div>
+    <div>
+      <div class="drinks-col-head">✅ Konsumierte Getränke</div>
+      <div id="drinksDone"></div>
+    </div>
+  </div>
+</div>
+
+<div id="progressClock" style="font-size:12px;color:#555;margin-top:6px;text-align:center;font-weight:800;">⏱ Zeit läuft...</div>
+
+<div class="bonus-wrap" id="bonusWrap"></div>
+<div class="mini-wrap" id="miniChallengeWrap"></div>
+
+<!-- ROADMAP -->
+<div class="road-outer">
+  <div class="road" id="roadmap"><div class="road-line"></div></div>
+</div>
+
+<!-- ADMIN -->
+<div class="admin-outer">
+  <div class="acard">
+    <div id="loginBox">
+      <span style="font-weight:800;color:#aaa;font-size:13px;">🔐 Admin-Bereich (Schiedsrichter)</span><br><br>
+      <input type="password" id="adminPwInput" placeholder="Passwort" onkeydown="if(event.key==='Enter')checkLogin()">
+      <button class="btn btn-gray btn-sm" onclick="checkLogin()">Login</button>
+      <div id="loginErr" style="color:#e74c3c;font-size:13px;margin-top:5px;"></div>
+    </div>
+  </div>
+
+  <div id="adminPanel" class="hidden">
+    <div class="acard">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+        <h2 style="margin:0;">⚙️ Admin-Panel</h2>
+        <button class="btn btn-gray btn-sm" onclick="adminLogout()">🚪 Logout</button>
+      </div>
+    </div>
+    <div class="acard" style="padding:11px 16px;">
+      <div style="display:flex;flex-wrap:wrap;gap:8px;">
+        <button class="btn btn-gray btn-sm" id="tabBtnRequests" onclick="switchTab('Requests')">📬 Anfragen<span id="reqBadge" class="req-badge hidden">0</span></button>
+        <button class="btn btn-gray btn-sm" id="tabBtnIntro"    onclick="switchTab('Intro')">📝 Intro</button>
+        <button class="btn btn-gray btn-sm" id="tabBtnLevels"   onclick="switchTab('Levels')">🗺️ Aufgaben</button>
+        <button class="btn btn-gray btn-sm" id="tabBtnQuiz"     onclick="switchTab('Quiz')">❓ Quiz</button>
+        <button class="btn btn-gray btn-sm" id="tabBtnDrinks"   onclick="switchTab('Drinks')">🍺 Getränke</button>
+        <button class="btn btn-gray btn-sm" id="tabBtnMini"     onclick="switchTab('Mini')">⚔️ Mini-Challenges</button>
+        <button class="btn btn-gray btn-sm" id="tabBtnSettings" onclick="switchTab('Settings')">⚙️ Einstellungen</button>
+        <button class="btn btn-gray btn-sm" id="tabBtnReset"    onclick="switchTab('Reset')">🔄 Reset</button>
+      </div>
+    </div>
+
+    <div id="adminTabRequests" class="acard hidden">
+      <h2>📬 Offene Anfragen</h2>
+      <div id="adminRequestList"></div>
+    </div>
+
+    <div id="adminTabIntro" class="acard hidden">
+      <h2>📝 Einleitung / Reise-Leitfaden</h2>
+      <p style="font-size:12px;color:#777;">Tipp: <b>{NAME}</b> wird automatisch durch den Namen des Bräutigams ersetzt (auch in Aufgaben- und Bonustexten).</p>
+      <label class="al">Text:</label>
+      <textarea class="ai" id="adminIntroTA" rows="14"></textarea>
+      <label class="al">Intro-Bild Pfad:</label>
+      <input type="text" class="ai" id="adminIntroImg" placeholder="bilder/intro.png">
+      <button class="btn btn-green mt10" onclick="saveIntro()">💾 Speichern</button>
+    </div>
+
+    <div id="adminTabLevels" class="hidden"><div id="adminLevelList"></div></div>
+
+    <div id="adminTabQuiz" class="hidden"><div id="adminQuizList"></div></div>
+
+    <div id="adminTabDrinks" class="acard hidden">
+      <h2>🍺 Konsumierte Getränke anpassen</h2>
+      <div id="adminDrinksList"></div>
+      <button class="btn btn-green mt10" onclick="saveAdminDrinks()">💾 Speichern</button>
+      <hr class="divider">
+      <h2>➖ Manuelle Korrektur der erspielten Getränke</h2>
+      <p style="font-size:13px;color:#777;margin-bottom:12px;">Z.B. als Strafe, wenn die Bonus-Aufgabe verweigert wird. Negative Zahlen reduzieren die verfügbare Menge.</p>
+      <div id="adminManualDrinkList"></div>
+      <button class="btn btn-orange mt10" onclick="window.saveManualDrinkAdjustments()">💾 Korrektur speichern</button>
+    </div>
+
+    <div id="adminTabMini" class="acard hidden">
+      <h2>⚔️ Mini-Challenges verwalten</h2>
+      <p style="font-size:13px;color:#777;margin-bottom:12px;">Eine Mini-Challenge («Drittelspause») wird alle 55 Minuten Spielzeit verfügbar.</p>
+      <div id="adminMiniList"></div>
+    </div>
+
+    <div id="adminTabSettings" class="acard hidden">
+      <h2>⚙️ Einstellungen</h2>
+      <label class="al">Name des Bräutigams:</label>
+      <input type="text" class="ai" id="settingGroom" placeholder="z.B. Marco">
+      <label class="al">Name der Gegner-Crew (Quiz):</label>
+      <input type="text" class="ai" id="settingCrew" placeholder="z.B. Die Polter-Crew">
+      <hr class="divider">
+      <h2>🏆 Bonus-Aufgabe</h2>
+      <label class="al">Titel:</label>
+      <input type="text" class="ai" id="settingBonusTitle">
+      <label class="al">Beschreibung:</label>
+      <textarea class="ai" id="settingBonusDesc" rows="3"></textarea>
+      <label class="al">Regeln bei Nicht-Durchführung:</label>
+      <textarea class="ai" id="settingBonusRules" rows="3"></textarea>
+      <label class="al">Text bei Erfolg:</label>
+      <textarea class="ai" id="settingBonusDone" rows="2"></textarea>
+      <hr class="divider">
+      <label class="al">Neues Admin-Passwort (leer = nicht ändern):</label>
+      <input type="password" class="ai" id="settingPw" placeholder="Neues Passwort">
+      <button class="btn btn-green mt10" onclick="saveSettings()">💾 Speichern</button>
+    </div>
+
+    <div id="adminTabReset" class="acard hidden">
+      <h2>🔄 Aufgaben zurücksetzen</h2>
+      <div id="adminResetList"></div>
+      <hr class="divider">
+      <h2>🏆 Bonus-Aufgabe</h2>
+      <div id="adminBonusResetInfo" style="font-size:13px;color:#777;margin-bottom:10px;"></div>
+      <button class="btn btn-orange btn-sm" onclick="window.resetBonusTask()">🔄 Bonus-Status zurücksetzen</button>
+    </div>
+  </div>
+</div>
+
+<!-- QUIZ OVERLAY (Golf + Eishockey) -->
+<div class="quiz-overlay golf" id="quizOverlay">
+  <div class="quiz-hdr"><div class="quiz-hdr-title" id="quizTitle">Quiz</div><button class="quiz-close" onclick="window.closeQuiz()">✕</button></div>
+  <div class="quiz-inner">
+    <div class="qscreen active" id="qs_setup"><div class="q-setup"><h2 id="q_setupTitle">Bereit?</h2>
+      <div class="q-players">
+        <div class="q-player p1"><label>Spieler 1</label><div style="font-family:'Fredoka One',cursive;font-size:1.1rem;" id="q_setupName1"></div></div>
+        <div class="q-player p2"><label>Spieler 2</label><div style="font-family:'Fredoka One',cursive;font-size:1.1rem;" id="q_setupName2"></div></div>
+      </div>
+      <p style="font-size:13px;line-height:1.6;margin-top:14px;color:rgba(255,255,255,.85);" id="q_setupText"></p>
+      <button class="q-btn q-btn-gold" onclick="window.qStart()">🚀 Quiz starten</button></div></div>
+
+    <div class="qscreen" id="qs_q1"><div class="q-turn p1" id="q_turn1"></div><div class="q-score"><div class="q-score-box p1"><b id="q_n11"></b><div class="q-points" id="q_p11">0</div><div class="q-detail" id="q_d11"></div></div><div class="q-vs">VS</div><div class="q-score-box p2"><b id="q_n12"></b><div class="q-points" id="q_p12">0</div><div class="q-detail" id="q_d12"></div></div></div><div class="q-progress">Frage <span id="q_num1">1</span> / <span class="q_total">15</span></div><div class="q-bar-bg"><div class="q-bar" id="q_bar1"></div></div><div class="q-timer"><div class="q-circle" id="q_c1">40</div><div class="q-timer-bar"><div class="q-timer-fill" id="q_t1" style="width:100%;background:#3C8D3A"></div></div></div><div class="q-question"><div class="q-label">Frage</div><div class="q-text" id="q_text1"></div></div><div class="q-answers" id="q_answers1"></div><div class="q-feedback" id="q_feedback1" style="display:none"></div><button class="q-btn q-btn-gray" id="q_next1" style="display:none" onclick="window.qHandoff('p2')">Weiter zu Spieler 2 →</button></div>
+
+    <div class="qscreen" id="qs_handoff"><div class="q-handoff"><div style="font-size:4rem">🔄</div><h2 id="q_hTitle" style="font-family:'Fredoka One';color:var(--gold);margin:12px 0"></h2><p id="q_hText"></p><button class="q-btn q-btn-gold" onclick="window.qReady()">▶ Ich bin bereit!</button></div></div>
+
+    <div class="qscreen" id="qs_q2"><div class="q-turn p2" id="q_turn2"></div><div class="q-score"><div class="q-score-box p1"><b id="q_n21"></b><div class="q-points" id="q_p21">0</div><div class="q-detail" id="q_d21"></div></div><div class="q-vs">VS</div><div class="q-score-box p2"><b id="q_n22"></b><div class="q-points" id="q_p22">0</div><div class="q-detail" id="q_d22"></div></div></div><div class="q-progress">Frage <span id="q_num2">1</span> / <span class="q_total">15</span></div><div class="q-bar-bg"><div class="q-bar" id="q_bar2"></div></div><div class="q-timer"><div class="q-circle" id="q_c2">40</div><div class="q-timer-bar"><div class="q-timer-fill" id="q_t2" style="width:100%;background:#c62828"></div></div></div><div class="q-question"><div class="q-label">Frage</div><div class="q-text" id="q_text2"></div></div><div class="q-answers" id="q_answers2"></div><div class="q-feedback" id="q_feedback2" style="display:none"></div><button class="q-btn q-btn-gray" id="q_next2" style="display:none" onclick="window.qHandoff('p1')">Nächste Frage →</button><button class="q-btn q-btn-gold" id="q_result" style="display:none" onclick="window.qShowResult()">🏆 Ergebnis anzeigen</button></div>
+
+    <div class="qscreen" id="qs_result"><div class="q-result"><div style="font-size:4rem">🏆</div><h2 id="q_resultTitle">Ergebnis</h2><p id="q_resultText"></p><div class="q-result-scores"><div class="q-result-box p1" id="q_resultBox1"><b id="q_resultName1"></b><div class="q-result-points" id="q_resultPoints1">0</div></div><div class="q-result-box p2" id="q_resultBox2"><b id="q_resultName2"></b><div class="q-result-points" id="q_resultPoints2">0</div></div></div><div id="q_resultAction"></div><div class="q-rounds-overview"><h3 style="font-family:'Fredoka One';color:var(--gold);margin-bottom:8px;">📊 Fragenstatistik</h3><div id="q_roundsOverview"></div></div><button class="q-btn q-btn-gray" onclick="window.closeQuiz()">✕ Quiz schliessen</button></div></div>
+  </div>
+</div>
+
+<!-- TASK MODAL -->
+<div class="modal-bg hidden" id="taskModal" onclick="bgClose(event)">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div id="modalContent"></div>
+  </div>
+</div>
+
+<!-- PRIZE OVERLAY -->
+<div class="prize-overlay hidden" id="prizeOverlay">
+  <div id="prizeIcon" style="font-size:5rem;margin-bottom:12px;"></div>
+  <div style="font-family:'Fredoka One',cursive;font-size:2.2rem;color:var(--gold);text-shadow:2px 2px 0 rgba(0,0,0,.4);margin-bottom:8px;">Tor! Anfrage gesendet!</div>
+  <div style="color:rgba(255,255,255,.9);font-size:1rem;font-weight:800;margin-bottom:8px;">🎁 Dein möglicher Preis:</div>
+  <div id="prizeTextBox" style="background:rgba(255,255,255,.15);border-radius:15px;padding:14px 24px;margin-bottom:12px;color:#fff;font-size:1.05rem;font-weight:700;max-width:380px;"></div>
+  <div style="color:rgba(255,255,255,0.7);font-size:0.85rem;margin-bottom:20px;">⏳ Der Schiedsrichter (Admin) prüft noch den Videobeweis.</div>
+  <button class="btn btn-gray" onclick="closePrize()">👍 OK!</button>
+</div>
+
+<!-- PENALTY OVERLAY -->
+<div class="pen-overlay hidden" id="penOverlay">
+  <div style="font-size:5rem;margin-bottom:12px;">🚨</div>
+  <div style="font-family:'Fredoka One',cursive;font-size:2.4rem;color:#fff;margin-bottom:8px;">AB AUF DIE STRAFBANK!</div>
+  <div id="penText" style="color:#ffcccc;font-size:1rem;margin-bottom:10px;max-width:380px;font-weight:700;"></div>
+  <div id="penDrinkText" style="color:#ffeeee;font-size:0.95rem;font-weight:800;margin-bottom:26px;max-width:380px;background:rgba(255,255,255,0.1);border-radius:11px;padding:10px 16px;"></div>
+  <button class="btn btn-gray" onclick="closePenalty()">OK, akzeptiert!</button>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
+import { getDatabase, ref, set, onValue, runTransaction } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-database.js";
+
+// ============================================================
+// FIREBASE
+// Aktuell wird dein bestehendes Projekt genutzt, aber unter einem
+// EIGENEN Pfad (DB_PATH). Der Hühnerstall-Spielstand bleibt unberührt.
+// Für ein komplett eigenes Projekt: Config unten ersetzen.
+// ============================================================
+const firebaseConfig = {
+  apiKey:            "AIzaSyDL4SH698UhYItHLKkDLxdpHprhd9cNDWE",
+  authDomain:        "huehnerstall-b04f3.firebaseapp.com",
+  databaseURL:       "https://huehnerstall-b04f3-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId:         "huehnerstall-b04f3",
+  storageBucket:     "huehnerstall-b04f3.firebasestorage.app",
+  messagingSenderId: "535117753476",
+  appId:             "1:535117753476:web:33118ff05f22876c7666d1",
+  measurementId:     "G-6DZQJ1C202"
+};
+const DB_PATH = 'polterabend_bully_putt';
+const fbApp = initializeApp(firebaseConfig);
+const db    = getDatabase(fbApp);
+const ROOT  = ref(db, DB_PATH);
+
+function setSyncStatus(state, msg) {
+  const el = document.getElementById('syncStatus');
+  el.textContent = msg;
+  el.className = state === 'ok' ? 'sync-ok' : state === 'err' ? 'sync-err' : 'sync-loading';
+}
+
+// ============================================================
+// KONSTANTEN
+// ============================================================
+const STORAGE_KEY = 'bully_putt_v1';
+// Symbole der 15 Stationen: Eishockey, Golf, Bier im Wechsel, Finale = Ring
+const NODE_ICONS = ['🏒','⛳','🍺','🏒','⛳','🍺','🏒','⛳','🍺','🏒','⛳','🍺','🏒','⛳','💍'];
+
+const DRINK_TYPES = [
+  { id: 'bier',        label: 'Bier',        icon: '🍺' },
+  { id: 'wein',        label: 'Wein',        icon: '🍷' },
+  { id: 'longdrink',   label: 'Longdrink',   icon: '🍹' },
+  { id: 'shot',        label: 'Shot',        icon: '🥃' },
+  { id: 'alkoholfrei', label: 'Alkoholfrei', icon: '🧃' },
+  { id: 'wasser',      label: 'Wasser',      icon: '💧' }
+];
+function emptyDrinks() { const o = {}; DRINK_TYPES.forEach(d => o[d.id] = 0); return o; }
+function drinks(obj) { return Object.assign(emptyDrinks(), obj || {}); }
+
+// ============================================================
+// QUIZ-FRAGEN  [Frage, [A, B, C, D], Index der richtigen Antwort]
+// ============================================================
+const GOLF_QUESTIONS = [
+  ['Wie lautet der richtige Vorname von Tiger Woods?', ['Eldrick','Earl','Elliot','Edward'], 0],
+  ['Wie viele Major-Titel hat Tiger Woods gewonnen?', ['14','15','17','18'], 1],
+  ['In welchem Jahr gewann Tiger Woods sein erstes Masters – mit 12 Schlägen Vorsprung?', ['1995','1997','1999','2001'], 1],
+  ['Wie oft hat Tiger Woods das Masters in Augusta gewonnen?', ['3-mal','4-mal','5-mal','6-mal'], 2],
+  ['Welche Farbe trägt Tiger Woods traditionell am Finaltag (Sonntag)?', ['Schwarz','Rot','Weiss','Grün'], 1],
+  ['Mit wie vielen PGA-Tour-Siegen teilt sich Tiger Woods den Rekord mit Sam Snead?', ['73','79','82','85'], 2],
+  ['Wie nennt man es, als Tiger 2000/2001 alle vier Major-Titel gleichzeitig hielt?', ['Golden Slam','Tiger Slam','Grand Four','Woods Cup'], 1],
+  ['Welches Major gewann Tiger 2008 mit verletztem Knie erst im Playoff gegen Rocco Mediate?', ['The Open','PGA Championship','US Open','Masters'], 2],
+  ['An welcher Universität spielte Tiger Woods College-Golf?', ['Stanford','Harvard','UCLA','Arizona State'], 0],
+  ['Wer hält mit 18 Titeln den Rekord für die meisten Major-Siege?', ['Arnold Palmer','Gary Player','Jack Nicklaus','Ben Hogan'], 2],
+  ['Wie heisst ein Ergebnis von 3 Schlägen unter Par auf einem Loch?', ['Eagle','Birdie','Albatros','Condor'], 2],
+  ['Wie viele Schläger darf ein Spieler maximal in der Golftasche haben?', ['12','13','14','16'], 2],
+  ['Welcher Ort gilt als «Home of Golf»?', ['Augusta','St Andrews','Pebble Beach','Carnoustie'], 1],
+  ['Welches Team gewann den Ryder Cup 2025 in Bethpage Black?', ['USA','Europa','Internationals','Unentschieden'], 1],
+  ['Was erhält der Sieger des Masters?', ['Eine Silberkanne','Ein grünes Jackett','Den Claret Jug','Eine goldene Mütze'], 1]
+];
+
+const HOCKEY_QUESTIONS = [
+  ['Mit welcher Rückennummer spielt Alexander Ovechkin?', ['8','87','99','71'], 0],
+  ['Für welches NHL-Team spielt Ovechkin seit seinem Debüt?', ['Pittsburgh Penguins','Washington Capitals','New York Rangers','Chicago Blackhawks'], 1],
+  ['In welchem Jahr wurde Ovechkin als Nummer 1 gedraftet?', ['2002','2004','2005','2006'], 1],
+  ['Wer wurde im selben Draft direkt nach Ovechkin an Position 2 gezogen?', ['Sidney Crosby','Evgeni Malkin','Ilya Kovalchuk','Pavel Datsyuk'], 1],
+  ['Wessen Torrekord (894 Tore) brach Ovechkin im April 2025?', ['Gordie Howe','Jaromír Jágr','Wayne Gretzky','Mario Lemieux'], 2],
+  ['Gegen welches Team erzielte Ovechkin sein Rekordtor Nr. 895?', ['New York Islanders','Chicago Blackhawks','Boston Bruins','Philadelphia Flyers'], 0],
+  ['In welchem Jahr gewann Ovechkin mit Washington den Stanley Cup?', ['2016','2017','2018','2019'], 2],
+  ['Gegen welches Team gewann Washington diesen Stanley-Cup-Final?', ['Vegas Golden Knights','Tampa Bay Lightning','Nashville Predators','Winnipeg Jets'], 0],
+  ['In welcher Stadt wurde Ovechkin geboren?', ['St. Petersburg','Moskau','Kasan','Omsk'], 1],
+  ['Welche Trophäe für den besten Torschützen gewann Ovechkin rekordmässig 9-mal?', ['Art Ross Trophy','Maurice Richard Trophy','Hart Trophy','Vezina Trophy'], 1],
+  ['Welcher Klub ist Schweizer Rekordmeister im Eishockey?', ['SC Bern','ZSC Lions','HC Davos','HC Lugano'], 2],
+  ['Wo wird der traditionsreiche Spengler Cup ausgetragen?', ['Zürich','Davos','Bern','Lugano'], 1],
+  ['Welcher Schweizer gewann 2020 als Erster die Norris Trophy (bester Verteidiger)?', ['Mark Streit','Roman Josi','Nino Niederreiter','Raphael Diaz'], 1],
+  ['Welcher Klub hat die meisten Stanley Cups gewonnen?', ['Toronto Maple Leafs','Detroit Red Wings','Montreal Canadiens','Boston Bruins'], 2],
+  ['Wie lange dauert eine kleine Strafe im Eishockey?', ['1 Minute','2 Minuten','4 Minuten','5 Minuten'], 1]
+];
+
+// Welche Aufgabe (Index) welches Quiz ersetzt
+const QUIZ_DEFS = {
+  golf:   { taskIdx: 4, title: '⛳ Golf-Quiz – Aufgabe 5',       theme: 'golf',   icon: '⛳', defaults: GOLF_QUESTIONS,   intro: 'Tiger lässt grüssen!' },
+  hockey: { taskIdx: 9, title: '🏒 Eishockey-Quiz – Aufgabe 10', theme: 'hockey', icon: '🏒', defaults: HOCKEY_QUESTIONS, intro: 'The Great 8 schaut zu!' }
+};
+function quizKeyForTask(i) { return Object.keys(QUIZ_DEFS).find(k => QUIZ_DEFS[k].taskIdx === i) || null; }
+function getQuizQuestions(key) {
+  const stored = gd.quizzes && gd.quizzes[key];
+  return (Array.isArray(stored) && stored.length) ? stored : QUIZ_DEFS[key].defaults;
+}
+
+// ============================================================
+// STANDARD-TEXTE
+// ============================================================
+const DEFAULT_INTRO =
+`Lieber {NAME}
+
+Jahrelang bist du deinen Teams treu hinterhergereist: Auswärtsfahrten im Fan-Bus, Stadionbier in der Kurve, Driving Range bis zum Sonnenuntergang. Heute startet deine allerletzte Fan-Reise als freier Mann – und am Ende wechselst du die Fronten: Du läufst über in den Hafen der Ehe. ⚓
+
+📍 DEIN REISE-LEITFADEN
+
+1️⃣ Check-in
+Trikot an, Handschuhe fest, Bier kalt. Ab jetzt entscheidet die Crew – Widerspruch gibt es nur mit Videobeweis.
+
+2️⃣ Die Route
+15 Stationen zwischen Eisfeld, Fairway und Theke. Jede Station wird erst freigeschaltet, wenn die vorherige erledigt ist.
+
+3️⃣ Tor oder Strafbank
+Schaffst du eine Aufgabe, gibt es Getränke als Preis. Verweigerst du oder läuft die Zeit ab – ab auf die Strafbank, inklusive Strafgetränk.
+
+4️⃣ Drittelspausen
+Alle 55 Minuten darfst du jemanden aus der Crew zu einer Mini-Challenge herausfordern – um einen Shot.
+
+5️⃣ Zwei Prüfungen am Spielfeldrand
+Das Golf-Quiz (Tiger lässt grüssen) und das Eishockey-Quiz (The Great 8 schaut zu). Du gegen die ganze Crew.
+
+6️⃣ Bonus-Runde
+Nach 7 erfolgreichen Stationen wartet dein persönlicher Stanley-Cup-Moment.
+
+7️⃣ Endstation: Hafen der Ehe
+Hier wird nicht mehr gewechselt – hier wird geankert.
+
+Kein Icing, kein Bogey – nur noch das Ja-Wort. Gute Reise! 🏒⛳🍺`;
+
+const DEFAULT_BONUS = {
+  title: '🏆 Der Stanley-Cup-Moment',
+  desc:  '{NAME} trinkt ein Bier auf ex – aus einem Eishockeyhelm oder einem Golfschuh (Crew entscheidet). Schafft er es, nimmt jede Person aus der Crew 2 Straf-Shots.',
+  rules: '⚠️ Bei Nicht-Durchführen: Komplett verweigert = Minus 5 Getränke | Nur angesetzt = Minus 1 Getränk | Mindestens halb leer = kein Abzug.',
+  done:  'Jede Person aus der Crew nimmt 2 Straf-Shots. 🥃🥃'
+};
+
+const TASK_TEMPLATES = [
+  { t:'Das erste Bully', m:10, p:{bier:1},
+    d:'Die Reise beginnt! Erkläre einer fremden Person in maximal 60 Sekunden die Icing-Regel. Sie muss sie danach in eigenen Worten wiederholen können.' },
+  { t:'Der erste Abschlag', m:0, p:{bier:1},
+    d:'Chippe mit einem Golfschläger (oder Besen) einen Tischtennisball aus 3 Metern in einen Becher. Maximal 5 Versuche.' },
+  { t:'Fan-Bus-Runde', m:0, p:{bier:1, shot:1},
+    d:'Bestelle für die Crew eine Runde – ausschliesslich mit Eishockey- und Golfbegriffen. Kein normales Wort erlaubt!\n(z.B. «Einmal Powerplay, Stange, Birdie-Grösse!»)' },
+  { t:'Powerplay', m:15, p:{longdrink:1},
+    d:'Sammle innerhalb von 15 Minuten 5 Glückwunsch-Unterschriften von fremden Personen auf deinem Trikot.' },
+  { t:'Golf-Quiz', m:0, p:{bier:1, shot:1},
+    d:'Das Golf-Quiz: 15 Fragen rund um Golf und Tiger Woods. Du trittst gegen die Crew an – wer mehr Punkte holt, gewinnt. Bei Gleichstand gilt die Aufgabe als bestanden.' },
+  { t:'Bier-Putt', m:0, p:{bier:1},
+    d:'Lege ein leeres Bierglas auf die Seite und putte einen Golfball aus 2 Metern hinein. 3 Versuche.' },
+  { t:'Penalty-Schiessen', m:0, p:{shot:1},
+    d:'5 Penaltys gegen den Trauzeugen im Tor (Besen + Tennisball oder Puck). Mindestens 3 müssen rein.' },
+  { t:'Caddie gesucht', m:20, p:{wein:1},
+    d:'Überzeuge eine fremde Person, 10 Minuten lang dein Caddie zu sein und deine «Golftasche» (Rucksack, Bier, was auch immer) hinterherzutragen.' },
+  { t:'Eheberatung an der Bande', m:0, p:{bier:1},
+    d:'Lass dir von einem verheirateten Paar drei Tipps für die Ehe geben – auf Video.' },
+  { t:'Eishockey-Quiz', m:0, p:{bier:1, shot:1},
+    d:'Das Eishockey-Quiz: 15 Fragen über Eishockey und Alexander Ovechkin – The Great 8. Du gegen die Crew.' },
+  { t:'Kabinenpredigt', m:0, p:{longdrink:1},
+    d:'Halte eine 60-Sekunden-Kabinenpredigt an deine zukünftige Frau – wie ein Coach in der Drittelspause. Die Crew filmt.' },
+  { t:'Hole in One an der Bar', m:15, p:{longdrink:1},
+    d:'Bringe den Barkeeper dazu, dir einen Drink zu mixen und ihn offiziell «Hole in One» zu taufen. Foto als Beweis.' },
+  { t:'Torhymne', m:0, p:{bier:1, shot:1},
+    d:'Dichte mit der Crew einen Fangesang über deine Braut und singe ihn lautstark in der Bar vor.' },
+  { t:'Der letzte Putt', m:0, p:{shot:1},
+    d:'Mit verbundenen Augen einen Putt aus 3 Metern versenken – die Crew darf dich nur mit Zurufen dirigieren. 3 Versuche.' },
+  { t:'Hafen der Ehe', m:0, p:{wein:1, shot:1},
+    d:'Endstation! Der Überläufer kommt an: Erzähle der Crew, wann du gewusst hast, dass sie die Richtige ist – und stosse mit allen auf deine Braut an. ⚓💍' }
+];
+
+// ============================================================
+// DEFAULT DATA
+// ============================================================
+function makeDefaultData() {
+  return {
+    password:   'admin123',
+    groomName:  'Bräutigam',
+    crewName:   'Die Polter-Crew',
+    intro:      DEFAULT_INTRO,
+    introImage: '',
+    bonusCfg:   Object.assign({}, DEFAULT_BONUS),
+    consumed:   emptyDrinks(),
+    manualDrinkAdjustments: emptyDrinks(),
+    requests:   {},
+    bonus: { unlocked: false, completed: false, skipped: false, shotsAwarded: 0 },
+    quizzes: {},
+    miniChallenges: [],
+    miniNextId: 1,
+    miniPeriodStart: null,
+    miniChallengeShots: 0,
+    tasks: TASK_TEMPLATES.map((tpl, i) => ({
+      title:          tpl.t,
+      desc:           tpl.d,
+      cover:          '',
+      prizeIcon:      ['🏒','⛳','🍺'][i % 3],
+      prizeText:      '',
+      prizeDrinks:    drinks(tpl.p),
+      penalty:        'Ab auf die Strafbank: 1 alkoholfreies Getränk auf ex.',
+      penaltyDrinks:  drinks({ alkoholfrei: 1 }),
+      deadlineMins:   tpl.m || 0,
+      done:           false,
+      penalized:      false,
+      pendingApproval:false,
+      started:        false,
+      unlocked:       i === 0
+    }))
+  };
+}
+
+let gd = makeDefaultData();
+let gameStartTime = null;
+
+function G() { return gd.groomName || 'Bräutigam'; }
+function CREW() { return gd.crewName || 'Die Crew'; }
+function fillName(s) { return String(s || '').replace(/\{NAME\}/g, G()); }
+
+// ============================================================
+// FIREBASE SYNC
+// ============================================================
+onValue(ROOT, (snapshot) => {
+  const val = snapshot.val();
+  if (!val) {
+    set(ROOT, gd).then(() => setSyncStatus('ok', '✅ Datenbank verbunden'));
+  } else {
+    mergeFromFirebase(val);
+    renderAll();
+    if (!document.getElementById('adminPanel').classList.contains('hidden')) refreshAdminIfOpen();
+    setSyncStatus('ok', '✅ Live synchronisiert');
+  }
+}, (err) => setSyncStatus('err', '❌ Verbindungsfehler: ' + err.message));
+
+function mergeFromFirebase(val) {
+  const base = makeDefaultData();
+  ['password','groomName','crewName','intro'].forEach(k => { if (val[k]) base[k] = val[k]; });
+  if (val.introImage !== undefined) base.introImage = val.introImage;
+  if (val.bonusCfg)   base.bonusCfg = Object.assign(base.bonusCfg, val.bonusCfg);
+  if (val.consumed)   base.consumed = drinks(val.consumed);
+  if (val.manualDrinkAdjustments) base.manualDrinkAdjustments = drinks(val.manualDrinkAdjustments);
+  if (val.requests)   base.requests = val.requests;
+  if (val.bonus)      base.bonus = Object.assign(base.bonus, val.bonus);
+  if (val.gameStartTime) base.gameStartTime = val.gameStartTime;
+  if (val.quizzes)    base.quizzes = val.quizzes;
+  if (Array.isArray(val.miniChallenges)) base.miniChallenges = val.miniChallenges;
+  if (val.miniNextId !== undefined) base.miniNextId = Number(val.miniNextId) || 1;
+  if (val.miniPeriodStart !== undefined) base.miniPeriodStart = val.miniPeriodStart;
+  if (val.miniChallengeShots !== undefined) base.miniChallengeShots = Number(val.miniChallengeShots) || 0;
+  if (Array.isArray(val.tasks)) {
+    val.tasks.forEach((st, i) => {
+      if (!st || !base.tasks[i]) return;
+      const t = base.tasks[i];
+      ['title','desc','cover','prizeIcon','prizeText','penalty','deadlineMins','startedAt','started','done','penalized','pendingApproval','unlocked'].forEach(k => {
+        if (st[k] !== undefined) t[k] = st[k];
+      });
+      if (st.prizeDrinks)   t.prizeDrinks   = drinks(st.prizeDrinks);
+      if (st.penaltyDrinks) t.penaltyDrinks = drinks(st.penaltyDrinks);
+      if (st.started === undefined && t.startedAt) t.started = true;
+    });
+  }
+  gd = base;
+  gameStartTime = gd.gameStartTime ? Number(gd.gameStartTime) : null;
+}
+
+function firebaseSafeData() { return JSON.parse(JSON.stringify(gd)); }
+
+function saveData() {
+  const data = firebaseSafeData();
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch (e) {}
+  setSyncStatus('loading', '⏳ Speichere…');
+  return set(ROOT, data)
+    .then(() => { setSyncStatus('ok', '✅ In Firebase gespeichert'); return true; })
+    .catch(e => { setSyncStatus('err', '❌ Firebase-Fehler: ' + e.message); throw e; });
+}
+
+// ============================================================
+// ANFRAGEN
+// ============================================================
+function createRequest(taskIdx) {
+  if (!gd.requests) gd.requests = {};
+  gd.requests['req_' + Date.now()] = {
+    taskIdx, taskTitle: gd.tasks[taskIdx].title, timestamp: Date.now(), status: 'pending'
+  };
+  gd.tasks[taskIdx].pendingApproval = true;
+  saveData();
+}
+
+function approveRequest(key) {
+  const req = gd.requests[key];
+  if (!req) return;
+  const i = req.taskIdx;
+  gd.tasks[i].done = true;
+  gd.tasks[i].penalized = false;
+  gd.tasks[i].pendingApproval = false;
+  unlockNext(i);
+  delete gd.requests[key];
+  saveData();
+  launchConfetti();
+  renderAll();
+  refreshAdminIfOpen();
+}
+
+function rejectRequest(key) {
+  const req = gd.requests[key];
+  if (!req) return;
+  gd.tasks[req.taskIdx].pendingApproval = false;
+  delete gd.requests[key];
+  saveData();
+  renderAll();
+  refreshAdminIfOpen();
+}
+
+function openRequests() {
+  return Object.entries(gd.requests || {}).filter(([, r]) => r.status === 'pending');
+}
+
+function refreshAdminIfOpen() {
+  const activeTab = document.querySelector('[id^="adminTab"]:not(.hidden)');
+  if (activeTab) {
+    const tab = activeTab.id.replace('adminTab', '');
+    if (tab === 'Requests') renderAdminRequests();
+    if (tab === 'Levels')   renderAdminLevels();
+    if (tab === 'Reset')    renderAdminReset();
+    if (tab === 'Drinks')   renderAdminDrinks();
+    if (tab === 'Mini')     renderAdminMiniChallenges();
+  }
+  updateReqBadge();
+}
+
+function updateReqBadge() {
+  const n = openRequests().length;
+  const badge = document.getElementById('reqBadge');
+  if (!badge) return;
+  badge.textContent = n;
+  badge.classList.toggle('hidden', n === 0);
+}
+
+// ============================================================
+// GETRÄNKE
+// ============================================================
+function calcEarnedDrinks() {
+  const totals = emptyDrinks();
+  gd.tasks.forEach(task => {
+    const src = (task.done && !task.penalized) ? task.prizeDrinks : task.penalized ? task.penaltyDrinks : null;
+    if (!src) return;
+    DRINK_TYPES.forEach(d => { totals[d.id] += Math.max(0, parseInt(src[d.id], 10) || 0); });
+  });
+  totals.shot += Math.max(0, parseInt(gd.miniChallengeShots, 10) || 0);
+  DRINK_TYPES.forEach(d => {
+    const adj = parseInt(gd.manualDrinkAdjustments?.[d.id], 10) || 0;
+    totals[d.id] = Math.max(0, totals[d.id] + adj);
+  });
+  return totals;
+}
+
+function normalizeConsumedDrinks(consumed, earned) {
+  const out = emptyDrinks();
+  DRINK_TYPES.forEach(d => {
+    out[d.id] = Math.min(Math.max(0, parseInt(consumed?.[d.id], 10) || 0), Math.max(0, parseInt(earned?.[d.id], 10) || 0));
+  });
+  return out;
+}
+
+function renderDrinks() {
+  const earned = calcEarnedDrinks();
+  const consumed = normalizeConsumedDrinks(gd.consumed, earned);
+  const todoEl = document.getElementById('drinksTodo');
+  const doneEl = document.getElementById('drinksDone');
+  todoEl.innerHTML = ''; doneEl.innerHTML = '';
+  let anyTodo = false, anyDone = false;
+
+  DRINK_TYPES.forEach(d => {
+    const total = earned[d.id] || 0;
+    const used = consumed[d.id] || 0;
+    const remaining = Math.max(0, total - used);
+    if (total <= 0) return;
+    if (remaining > 0) {
+      anyTodo = true;
+      todoEl.insertAdjacentHTML('beforeend',
+        '<div class="drink-row"><span class="drink-label">' + d.icon + ' ' + d.label + '</span>' +
+        '<div style="display:flex;align-items:center;gap:6px;"><span class="drink-count">' + remaining + 'x</span>' +
+        '<button class="drink-consume-btn" onclick="window.consumeDrink(\'' + d.id + '\')">✓ Trinken</button></div></div>');
+    }
+    if (used > 0) {
+      anyDone = true;
+      doneEl.insertAdjacentHTML('beforeend',
+        '<div class="drink-consumed-row"><span class="drink-label">' + d.icon + ' ' + d.label + '</span><span class="drink-count">' + used + 'x</span></div>');
+    }
+  });
+  if (!anyTodo) todoEl.innerHTML = '<div class="drinks-empty">Keine offenen Getränke</div>';
+  if (!anyDone) doneEl.innerHTML = '<div class="drinks-empty">Noch nichts getrunken</div>';
+}
+
+window.consumeDrink = async function(drinkId) {
+  if (!DRINK_TYPES.some(d => d.id === drinkId)) return;
+  const maximum = calcEarnedDrinks()[drinkId] || 0;
+  if (maximum <= 0) return;
+  try {
+    setSyncStatus('loading', '⏳ Getränk wird gespeichert…');
+    const result = await runTransaction(ref(db, DB_PATH + '/consumed/' + drinkId), cur => {
+      const c = Math.max(0, parseInt(cur, 10) || 0);
+      return c >= maximum ? c : c + 1;
+    });
+    if (result.committed) {
+      if (!gd.consumed) gd.consumed = emptyDrinks();
+      gd.consumed[drinkId] = Math.max(0, parseInt(result.snapshot.val(), 10) || 0);
+      renderDrinks();
+      if (!document.getElementById('adminTabDrinks').classList.contains('hidden')) renderAdminDrinks();
+      setSyncStatus('ok', '✅ Prost! Getränk gespeichert');
+    }
+  } catch (e) {
+    console.error(e);
+    setSyncStatus('err', '❌ Getränk konnte nicht gespeichert werden');
+    alert('❌ Das Getränk konnte nicht in Firebase gespeichert werden.');
+  }
+};
+
+// ============================================================
+// RENDER
+// ============================================================
+function renderAll() {
+  updateBonusUnlock();
+  renderHeader();
+  renderIntro();
+  renderProgress();
+  renderDrinks();
+  renderBonus();
+  renderMiniChallenges(true);
+  renderRoadmap();
+  updateReqBadge();
+}
+
+function renderHeader() {
+  document.getElementById('hdrSub').textContent = 'Die letzte Fan-Reise von ' + G() + ' – Endstation Hafen der Ehe ⚓';
+}
+
+function renderIntro() {
+  document.getElementById('introText').textContent = fillName(gd.intro).replace(/\r\n?/g, '\n');
+  const img = document.getElementById('introImage');
+  if (gd.introImage) { img.src = gd.introImage; img.classList.remove('hidden'); }
+  else img.classList.add('hidden');
+}
+
+function renderProgress() {
+  const total = gd.tasks.length;
+  const doneCount = gd.tasks.filter(t => t.done && !t.penalized).length;
+  const penCount = gd.tasks.filter(t => t.penalized).length;
+  const finished = doneCount + penCount;
+  const pct = Math.round(finished / total * 100);
+  document.getElementById('progBar').style.width = pct + '%';
+  document.getElementById('progPct').textContent = pct + '%';
+  document.getElementById('progLabel').textContent = finished + ' von ' + total + ' Stationen abgeschlossen' + (pct === 100 ? ' – willkommen im Hafen der Ehe! ⚓' : '');
+  document.getElementById('progStats').innerHTML =
+    '<span class="prog-stat prog-stat-green">🥅 ' + doneCount + ' Tore</span>' +
+    '<span class="prog-stat prog-stat-red">🚨 ' + penCount + ' Strafbank</span>' +
+    '<span class="prog-stat prog-stat-gray">🔒 ' + (total - finished) + ' offen</span>';
+}
+
+// ── Bonus ──
+function updateBonusUnlock() {
+  if (!gd.bonus) gd.bonus = { unlocked: false, completed: false, skipped: false, shotsAwarded: 0 };
+  const successful = gd.tasks.filter(t => t.done === true && t.penalized !== true).length;
+  gd.bonus.unlocked = successful >= 7;
+}
+
+function renderBonus() {
+  const c = document.getElementById('bonusWrap');
+  updateBonusUnlock();
+  const cfg = gd.bonusCfg || DEFAULT_BONUS;
+  if (!gd.bonus.unlocked) { c.innerHTML = ''; return; }
+  if (gd.bonus.completed) {
+    c.innerHTML = '<div class="bonus-card"><h2>🎉 ' + escHtml(fillName(cfg.title)) + ' – geschafft!</h2><div class="bonus-status">✅ ' + escHtml(G()) + ' hat den Bonus durchgezogen.</div><p>' + escHtml(fillName(cfg.done)) + '</p></div>';
+    return;
+  }
+  if (gd.bonus.skipped) {
+    c.innerHTML = '<div class="bonus-card bonus-skipped"><h2>' + escHtml(fillName(cfg.title)) + '</h2><div class="bonus-status">⏭️ Bonus übersprungen – Bestrafung nach Vorgaben!\n' + escHtml(fillName(cfg.rules)) + '</div></div>';
+    return;
+  }
+  c.innerHTML = '<div class="bonus-card"><h2>' + escHtml(fillName(cfg.title)) + ' – freigeschaltet!</h2>' +
+    '<p>' + escHtml(fillName(cfg.desc)) + '</p>' +
+    '<div class="bonus-status">' + escHtml(fillName(cfg.rules)) + '</div>' +
+    '<div style="display:flex;gap:8px;flex-wrap:wrap;">' +
+      '<button class="btn btn-red btn-sm" onclick="window.completeBonus()">🏆 Ich mach\'s!</button>' +
+      '<button class="btn btn-gray btn-sm" onclick="window.skipBonus()">⏭️ Nicht machen</button>' +
+    '</div></div>';
+}
+
+window.completeBonus = function() {
+  if (!confirm('Hat ' + G() + ' die Bonus-Aufgabe erfolgreich durchgezogen?')) return;
+  gd.bonus.completed = true; gd.bonus.skipped = false; gd.bonus.shotsAwarded = 2;
+  saveData(); renderAll();
+  alert('🎉 Bonus geschafft! ' + fillName((gd.bonusCfg || DEFAULT_BONUS).done));
+};
+
+window.skipBonus = function() {
+  if (!confirm('Bonus-Aufgabe wirklich überspringen? Es gibt die Bestrafung nach den geltenden Regeln!')) return;
+  gd.bonus.skipped = true; gd.bonus.completed = false; gd.bonus.shotsAwarded = 0;
+  saveData(); renderAll();
+};
+
+// ── Roadmap ──
+function renderRoadmap() {
+  const rm = document.getElementById('roadmap');
+  rm.innerHTML = '<div class="road-line"></div>';
+  let lastDoneIdx = -1;
+  gd.tasks.forEach((t, i) => { if (t.done || t.penalized) lastDoneIdx = i; });
+  const showUpTo = Math.min(gd.tasks.length - 1, lastDoneIdx + 5);
+
+  gd.tasks.forEach((t, i) => {
+    if (i > showUpTo) return;
+    const isPending = t.pendingApproval && !t.done && !t.penalized;
+    const isDone = t.done && !t.penalized;
+    const isPen = t.penalized;
+    const isJustUnlocked = t.unlocked && !t.started && !isDone && !isPen && !isPending;
+    let b = 'node-bubble ', c = 'node-card ';
+    if (isPen)            { b += 'b-penalty';  c += 'c-penalty'; }
+    else if (isDone)      { b += 'b-done';     c += 'c-done'; }
+    else if (isPending)   { b += 'b-pending';  c += 'c-pending'; }
+    else if (!t.unlocked) { b += 'b-locked';   c += 'c-locked'; }
+    else if (isJustUnlocked) { b += 'b-unlocked'; c += 'c-unlocked'; }
+    else                  { b += 'b-active';   c += 'c-active'; }
+
+    let chips = '';
+    if (isPen)            chips += '<span class="chip ch-red">🚨 Strafbank</span>';
+    else if (isDone)      chips += '<span class="chip ch-green">🥅 Tor!</span><span class="chip ch-green">' + escHtml(t.prizeIcon || '🏆') + ' Preis erhalten</span>';
+    else if (isPending)   chips += '<span class="chip ch-orange">📹 Videobeweis läuft</span>';
+    else if (!t.unlocked) chips += '<span class="chip ch-gray">🔒 Gesperrt</span>';
+    else chips += isJustUnlocked ? '<span class="chip ch-blue">🔓 Freigeschaltet</span>' : '<span class="chip ch-yellow">▶ Aktiv</span>';
+    if (!isPen && !isDone && !isPending && t.unlocked && t.deadlineMins > 0) chips += '<span class="chip ch-yellow">⏱ ' + t.deadlineMins + ' Min.</span>';
+    const qk = quizKeyForTask(i);
+    if (qk) chips += '<span class="chip ch-blue">' + QUIZ_DEFS[qk].icon + ' Quiz</span>';
+
+    const click = (isDone || isPen || t.unlocked || isPending) ? 'onclick="window.openTask(' + i + ')"' : '';
+    const node = document.createElement('div');
+    node.className = 'task-node';
+    node.innerHTML =
+      '<div class="' + b + '" ' + click + '>' + NODE_ICONS[i] + '</div>' +
+      '<div class="' + c + '" ' + click + '>' +
+        '<div class="node-num">Station ' + (i + 1) + ' / ' + gd.tasks.length + '</div>' +
+        '<div class="node-title">' + escHtml(fillName(t.title)) + '</div>' +
+        '<div class="node-chips">' + chips + '</div>' +
+      '</div>';
+    rm.appendChild(node);
+  });
+
+  const remaining = gd.tasks.length - 1 - showUpTo;
+  if (remaining > 0) {
+    const hint = document.createElement('div');
+    hint.style.cssText = 'text-align:center;padding:10px 0 4px;font-size:13px;color:#555;font-weight:700;';
+    hint.textContent = '… und noch ' + remaining + ' weitere Stationen bis zum Hafen der Ehe! ⚓';
+    rm.appendChild(hint);
+  }
+}
+
+// ============================================================
+// MINI-CHALLENGES («Drittelspause»)
+// ============================================================
+const MINI_PERIOD_MS = 55 * 60 * 1000;
+const MINI_DURATION_MS = 5 * 60 * 1000;
+let miniLastMode = null;
+
+function getMiniPeriodStart() {
+  if (gd.miniPeriodStart) return Number(gd.miniPeriodStart);
+  return gd.gameStartTime ? Number(gd.gameStartTime) : null;
+}
+function getMiniRemainingMs() {
+  const s = getMiniPeriodStart();
+  return s ? Math.max(0, MINI_PERIOD_MS - (Date.now() - s)) : null;
+}
+function getOpenMiniChallenge() {
+  if (!Array.isArray(gd.miniChallenges)) gd.miniChallenges = [];
+  return gd.miniChallenges.find(c => c.status === 'open') || null;
+}
+function formatMiniTime(ms) {
+  const s = Math.ceil(Math.max(0, ms) / 1000);
+  const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
+  return (h ? String(h).padStart(2, '0') + ':' : '') + String(m).padStart(2, '0') + ':' + String(sec).padStart(2, '0');
+}
+function miniResultLine(c) {
+  const title = escHtml(c.title || 'Mini-Challenge'), opp = escHtml(c.opponent || 'Unbekannt');
+  return c.status === 'won'
+    ? '🏆 «' + title + '» – ' + escHtml(G()) + ' hat gegen ' + opp + ' gewonnen (+1 Shot)'
+    : '😤 «' + title + '» – ' + escHtml(G()) + ' hat gegen ' + opp + ' verloren';
+}
+function renderMiniHistoryHtml(list) {
+  const inner = !list.length
+    ? '<div style="color:rgba(255,255,255,.65);">Noch keine abgeschlossen.</div>'
+    : list.slice().reverse().map(c => '<div style="margin-top:6px;">' + miniResultLine(c) + '</div>').join('');
+  return '<div class="mini-card" style="margin-top:12px;"><h2>📜 Bereits gespielte Drittelspausen</h2>' + inner + '</div>';
+}
+
+function renderMiniChallenges(force) {
+  const container = document.getElementById('miniChallengeWrap');
+  const start = getMiniPeriodStart();
+  const remaining = getMiniRemainingMs();
+  const ch = getOpenMiniChallenge();
+  const completed = (gd.miniChallenges || []).filter(c => c.status === 'won' || c.status === 'lost');
+  const name = escHtml(G());
+  let mode, body = '', extra = '';
+
+  if (!start) {
+    mode = 'not-started';
+    body = '<h2>⚔️ Drittelspause – Mini-Challenge</h2><p>Die Spielzeit startet mit der ersten Station. Alle 55 Minuten kann ' + name + ' gegen eine Person aus der Crew um einen Shot antreten.</p><div class="mini-timer">⏱ Spiel noch nicht gestartet</div>';
+  } else if (remaining > 0) {
+    mode = 'waiting';
+    body = '<h2>⚔️ Drittelspause – Mini-Challenge</h2><p>Alle 55 Minuten fordert ' + name + ' eine beliebige Person aus der Crew heraus. Maximal 5 Minuten Spielzeit.</p><div class="mini-timer" id="miniCountdownText">⏱ Nächste Drittelspause in ' + formatMiniTime(remaining) + '</div>';
+  } else if (!ch) {
+    mode = 'form';
+    body = '<h2>⚔️ Drittelspause! Mini-Challenge bereit</h2><p>Tragt eine Challenge und eine Gegenperson ein (max. 5 Minuten). Ideen: Bierdeckel-Flip, Armdrücken, Putt-Duell, Penalty mit Bierdeckel.</p>' +
+      '<input class="mini-public-input" id="miniPublicTitle" placeholder="Titel der Challenge">' +
+      '<input class="mini-public-input" id="miniPublicOpponent" placeholder="Gegner aus der Crew">' +
+      '<textarea class="mini-public-input" id="miniPublicDescription" placeholder="Beschreibung und Regeln"></textarea>' +
+      '<button class="btn btn-green btn-sm" onclick="window.savePublicMiniChallenge()">⚔️ Challenge erfassen</button>';
+  } else if (!ch.startedAt) {
+    mode = 'ready-' + ch.id;
+    body = '<h2>⚔️ Mini-Challenge um einen Shot</h2><p><strong>' + escHtml(ch.title) + '</strong><br>' + escHtml(ch.description || '') + '</p>' +
+      '<div class="mini-meta">' + name + ' gegen: ' + escHtml(ch.opponent || '') + ' · Maximal 5 Minuten</div>' +
+      '<button class="btn btn-green btn-sm" onclick="window.startMiniChallenge()">▶ Bully! Challenge starten</button>';
+  } else {
+    const left = Math.max(0, MINI_DURATION_MS - (Date.now() - Number(ch.startedAt)));
+    if (left <= 0) {
+      mode = 'expired-' + ch.id; extra = ' mini-result-loss';
+      body = '<h2>⏱ Zeit abgelaufen</h2><p>Die Mini-Challenge wurde nicht innerhalb von 5 Minuten abgeschlossen.</p>';
+      if (!ch.expiryHandled) window.expireMiniChallenge(ch.id);
+    } else {
+      mode = 'running-' + ch.id;
+      body = '<h2>⚔️ Mini-Challenge läuft</h2><p><strong>' + escHtml(ch.title) + '</strong><br>' + escHtml(ch.description || '') + '</p>' +
+        '<div class="mini-meta">' + name + ' gegen: ' + escHtml(ch.opponent || '') + '</div>' +
+        '<div class="mini-timer" id="miniCountdownText">⏱ Noch ' + formatMiniTime(left) + '</div>' +
+        '<div style="display:flex;gap:8px;flex-wrap:wrap;">' +
+          '<button class="btn btn-green btn-sm" onclick="window.finishMiniChallenge(\'won\')">🏆 ' + name + ' gewinnt (+1 Shot)</button>' +
+          '<button class="btn btn-red btn-sm" onclick="window.finishMiniChallenge(\'lost\')">😤 ' + name + ' verliert</button>' +
+        '</div>';
+    }
+  }
+
+  if (force || mode !== miniLastMode) {
+    container.innerHTML = '<div class="mini-card' + extra + '">' + body + '</div>' + renderMiniHistoryHtml(completed);
+    miniLastMode = mode;
+    return;
+  }
+  const timeEl = document.getElementById('miniCountdownText');
+  if (!timeEl) return;
+  if (mode === 'waiting') timeEl.textContent = '⏱ Nächste Drittelspause in ' + formatMiniTime(remaining);
+  else if (mode.indexOf('running') === 0) {
+    const left = Math.max(0, MINI_DURATION_MS - (Date.now() - Number(ch.startedAt)));
+    if (left <= 0) { miniLastMode = null; renderMiniChallenges(true); }
+    else timeEl.textContent = '⏱ Noch ' + formatMiniTime(left);
+  }
+}
+
+window.startMiniChallenge = async function() {
+  const ch = getOpenMiniChallenge();
+  if (!ch || ch.startedAt) return;
+  ch.startedAt = Date.now();
+  try { await saveData(); renderMiniChallenges(true); }
+  catch (e) { delete ch.startedAt; alert('❌ Die Mini-Challenge konnte nicht gestartet werden.'); }
+};
+
+window.expireMiniChallenge = async function(id) {
+  const ch = (gd.miniChallenges || []).find(c => String(c.id) === String(id));
+  if (!ch || ch.status !== 'open' || ch.expiryHandled) return;
+  ch.status = 'lost'; ch.expiryHandled = true; ch.finishedAt = Date.now();
+  gd.miniPeriodStart = Date.now();
+  try { await saveData(); renderAll(); } catch (e) { console.error(e); }
+};
+
+window.finishMiniChallenge = async function(result) {
+  const ch = getOpenMiniChallenge();
+  if (!ch || (result !== 'won' && result !== 'lost')) return;
+  if (!confirm(result === 'won' ? 'Hat ' + G() + ' die Mini-Challenge gewonnen?' : 'Hat ' + G() + ' die Mini-Challenge verloren?')) return;
+  const prev = firebaseSafeData();
+  try {
+    ch.status = result; ch.finishedAt = Date.now();
+    if (result === 'won') gd.miniChallengeShots = (gd.miniChallengeShots || 0) + 1;
+    gd.miniPeriodStart = Date.now();
+    await saveData(); renderAll();
+  } catch (e) {
+    mergeFromFirebase(prev); renderAll();
+    alert('❌ Die Mini-Challenge konnte nicht gespeichert werden.');
+  }
+};
+
+async function persistMiniChallenge(title, opponent, description) {
+  if (!Array.isArray(gd.miniChallenges)) gd.miniChallenges = [];
+  let ch = getOpenMiniChallenge();
+  if (!ch) {
+    ch = { id: gd.miniNextId || 1, status: 'open', createdAt: Date.now() };
+    gd.miniNextId = Number(ch.id) + 1;
+    gd.miniChallenges.push(ch);
+  }
+  ch.title = title; ch.opponent = opponent; ch.description = description;
+  await saveData();
+}
+
+function readMiniForm(prefix) {
+  const v = id => (document.getElementById(prefix + id)?.value || '').trim();
+  return [v('Title'), v('Opponent'), v('Description')];
+}
+
+window.savePublicMiniChallenge = async function() {
+  const [t, o, d] = readMiniForm('miniPublic');
+  if (!t || !o || !d) { alert('Bitte Titel, Gegner und Beschreibung eintragen.'); return; }
+  try { await persistMiniChallenge(t, o, d); renderMiniChallenges(true); }
+  catch (e) { alert('❌ Mini-Challenge konnte nicht gespeichert werden.'); }
+};
+
+window.saveMiniChallenge = async function() {
+  const [t, o, d] = readMiniForm('mini');
+  if (!t || !o || !d) { alert('Bitte Titel, Gegner und Beschreibung eintragen.'); return; }
+  try { await persistMiniChallenge(t, o, d); renderAdminMiniChallenges(); renderMiniChallenges(true); alert('✅ Mini-Challenge gespeichert.'); }
+  catch (e) { alert('❌ Mini-Challenge konnte nicht gespeichert werden.'); }
+};
+
+function renderAdminMiniChallenges() {
+  const c = document.getElementById('adminMiniList');
+  const active = getOpenMiniChallenge();
+  const completed = (gd.miniChallenges || []).filter(x => x.status !== 'open');
+  let html = '<div class="mini-admin-row">' +
+    '<label class="al">Titel der nächsten/aktuellen Challenge:</label><input class="ai" id="miniTitle" value="' + escHtml(active?.title) + '" placeholder="z.B. Putt-Duell">' +
+    '<label class="al">Gegner:</label><input class="ai" id="miniOpponent" value="' + escHtml(active?.opponent) + '">' +
+    '<label class="al">Beschreibung:</label><textarea class="ai" id="miniDescription">' + escHtml(active?.description) + '</textarea>' +
+    '<div class="alrow"><button class="btn btn-green btn-sm" onclick="window.saveMiniChallenge()">💾 Challenge speichern</button>' +
+    (active ? '<button class="btn btn-red btn-sm" onclick="window.deleteOpenMiniChallenge()">🗑️ Aktuelle Challenge löschen</button>' : '') +
+    '</div></div><h3 style="font-family:\'Fredoka One\';margin:14px 0 8px;color:var(--rink);">Abgeschlossene Mini-Challenges</h3>';
+  if (!completed.length) html += '<div style="color:#aaa;font-size:13px;">Noch keine abgeschlossenen Mini-Challenges.</div>';
+  completed.slice().reverse().forEach(ch => {
+    const id = escHtml(String(ch.id));
+    html += '<div class="mini-admin-row"><div style="font-size:12px;font-weight:800;color:' + (ch.status === 'won' ? 'var(--grass)' : 'var(--red)') + ';margin-bottom:8px;">' + (ch.status === 'won' ? '🏆 Gewonnen (+1 Shot)' : '😤 Verloren') + '</div>' +
+      '<label class="al">Titel:</label><input class="ai" id="miniHistTitle_' + id + '" value="' + escHtml(ch.title) + '">' +
+      '<label class="al">Gegner:</label><input class="ai" id="miniHistOpponent_' + id + '" value="' + escHtml(ch.opponent) + '">' +
+      '<div class="alrow"><button class="btn btn-green btn-sm" onclick="window.saveMiniHistoryEntry(\'' + id + '\')">💾 Speichern</button>' +
+      '<button class="btn btn-red btn-sm" onclick="window.deleteMiniHistoryEntry(\'' + id + '\')">🗑️ Löschen</button></div></div>';
+  });
+  c.innerHTML = html;
+}
+
+window.deleteOpenMiniChallenge = async function() {
+  const ch = getOpenMiniChallenge();
+  if (!ch || !confirm('Aktuelle Challenge «' + (ch.title || 'Mini-Challenge') + '» wirklich löschen?')) return;
+  gd.miniChallenges = gd.miniChallenges.filter(c => String(c.id) !== String(ch.id));
+  try { await saveData(); } catch (e) { alert('❌ Konnte nicht gelöscht werden.'); }
+  renderAdminMiniChallenges(); renderMiniChallenges(true);
+};
+
+window.saveMiniHistoryEntry = async function(id) {
+  const ch = (gd.miniChallenges || []).find(c => String(c.id) === String(id));
+  if (!ch) return;
+  const t = document.getElementById('miniHistTitle_' + id).value.trim();
+  const o = document.getElementById('miniHistOpponent_' + id).value.trim();
+  if (!t || !o) { alert('Bitte Titel und Gegner ausfüllen.'); return; }
+  ch.title = t; ch.opponent = o;
+  try { await saveData(); renderAdminMiniChallenges(); renderMiniChallenges(true); alert('✅ Gespeichert.'); }
+  catch (e) { alert('❌ Konnte nicht gespeichert werden.'); }
+};
+
+window.deleteMiniHistoryEntry = async function(id) {
+  const ch = (gd.miniChallenges || []).find(c => String(c.id) === String(id));
+  if (!ch) return;
+  if (!confirm('Mini-Challenge «' + (ch.title || '') + '» wirklich löschen?' + (ch.status === 'won' ? ' Der gewonnene Shot wird wieder abgezogen.' : ''))) return;
+  const prev = firebaseSafeData();
+  try {
+    if (ch.status === 'won') gd.miniChallengeShots = Math.max(0, (parseInt(gd.miniChallengeShots, 10) || 0) - 1);
+    gd.miniChallenges = gd.miniChallenges.filter(c => String(c.id) !== String(id));
+    gd.consumed = normalizeConsumedDrinks(gd.consumed, calcEarnedDrinks());
+    await saveData();
+  } catch (e) { mergeFromFirebase(prev); alert('❌ Konnte nicht gelöscht werden.'); }
+  renderAdminMiniChallenges(); renderAll();
+};
+
+// ============================================================
+// AUFGABEN-MODAL
+// ============================================================
+let activeTimer = null, activeIdx = null, timerEndTs = null, pendingPenaltyIdx = null;
+
+window.openTask = function(i) {
+  if (i === 0) startGameClock();
+  const t = gd.tasks[i];
+  activeIdx = i;
+
+  if (t.unlocked && !t.done && !t.penalized && !t.pendingApproval && !t.started) {
+    t.started = true;
+    if (t.deadlineMins > 0 && !t.startedAt) t.startedAt = Date.now();
+    saveData();
+    renderRoadmap();
+  }
+
+  document.getElementById('taskModal').classList.remove('hidden');
+  const open = t.unlocked && !t.done && !t.penalized && !t.pendingApproval;
+
+  const coverHTML = t.cover
+    ? '<img src="' + escHtml(t.cover) + '" class="modal-cover" onerror="this.style.display=\'none\'">'
+    : '<div class="modal-cover-ph">' + NODE_ICONS[i] + '</div>';
+
+  let statusHTML = '';
+  if (t.penalized)            statusHTML = '<div class="status-penalty">🚨 Diese Station endete auf der Strafbank!</div>';
+  else if (t.done)            statusHTML = '<div class="status-ok">🥅 Tor! Diese Station ist erledigt!</div>';
+  else if (t.pendingApproval) statusHTML = '<div class="pending-info">📹 Videobeweis läuft – wartet auf Admin-Bestätigung…</div>';
+  else if (!t.unlocked)       statusHTML = '<div class="status-lock">🔒 Noch gesperrt – schliesse zuerst die vorherige Station ab.</div>';
+
+  const timerHTML = (open && t.deadlineMins > 0)
+    ? '<div class="timer-row"><div class="t-circle" id="tCircle" style="background:conic-gradient(var(--grass) 360deg,rgba(0,0,0,.08) 0deg);">--</div>' +
+      '<div><div style="font-weight:800;font-size:14px;">Zeitlimit</div><div style="font-size:12px;color:#777;">' + t.deadlineMins + ' Minuten – sonst geht es auf die Strafbank!</div></div></div>'
+    : '';
+
+  let prizeHTML = '';
+  if (t.done && !t.penalized) {
+    const dl = drinkSummaryText(t.prizeDrinks);
+    prizeHTML = '<div class="prize-box"><div class="prize-icon-big">' + escHtml(t.prizeIcon || '🏆') + '</div><h3>🍺 Prost!</h3>' + (dl ? '<div style="font-size:14px;font-weight:700;margin-top:6px;">' + dl + '</div>' : '') + '</div>';
+  } else if (t.penalized) {
+    const pl = drinkSummaryText(t.penaltyDrinks);
+    prizeHTML = '<div class="penalty-info" style="text-align:center;"><div style="font-size:1.5rem;margin-bottom:4px;">🚨</div><div>Strafe: ' + escHtml(t.penalty) + '</div>' + (pl ? '<div style="margin-top:5px;">' + pl + '</div>' : '') + '</div>';
+  } else if (open) {
+    prizeHTML = '<div class="prize-box" style="opacity:.55;"><div style="font-size:2rem;">🎁</div><div style="font-size:13px;color:#777;margin-top:4px;">Preis wird nach dem Tor enthüllt…</div></div>';
+  }
+
+  let penHTML = '';
+  if (open && t.penalty) {
+    const pdi = drinkSummaryText(t.penaltyDrinks);
+    penHTML = '<div class="penalty-info">⚠️ Strafe bei Nicht-Bestehen: ' + escHtml(t.penalty) + (pdi ? ' | ' + pdi : '') + '</div>';
+  }
+
+  let btnHTML = '';
+  if (open) {
+    const qk = quizKeyForTask(i);
+    const mainBtn = qk
+      ? '<button class="btn btn-rink" onclick="window.openQuiz(\'' + qk + '\')">' + QUIZ_DEFS[qk].icon + ' Quiz starten</button>'
+      : '<button class="btn btn-orange" onclick="window.requestComplete(' + i + ')">📬 Als erledigt melden</button>';
+    btnHTML = '<div class="tc mt14" style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">' + mainBtn +
+      '<button class="btn btn-red" onclick="window.penalizeTask(' + i + ')">🚨 Strafe akzeptieren</button></div>';
+  }
+
+  document.getElementById('modalContent').innerHTML = coverHTML + statusHTML +
+    '<div class="modal-title">' + escHtml(fillName(t.title)) + '</div>' +
+    '<div class="modal-desc">' + escHtml(fillName(t.desc)) + '</div>' +
+    timerHTML + prizeHTML + penHTML + btnHTML;
+
+  clearInterval(activeTimer); activeTimer = null;
+  if (open && t.deadlineMins > 0) {
+    const totalSecs = t.deadlineMins * 60;
+    if (!t.startedAt) { t.startedAt = Date.now(); saveData(); }
+    timerEndTs = t.startedAt + totalSecs * 1000;
+    const expire = () => {
+      clearInterval(activeTimer); activeTimer = null;
+      window.closeModal();
+      pendingPenaltyIdx = i;
+      showPenalty(gd.tasks[i].penalty || 'Zeit abgelaufen!', gd.tasks[i].penaltyDrinks);
+    };
+    const remStart = Math.round((timerEndTs - Date.now()) / 1000);
+    if (remStart <= 0) { expire(); return; }
+    tickTimer(remStart, totalSecs);
+    activeTimer = setInterval(() => {
+      const rem = Math.round((timerEndTs - Date.now()) / 1000);
+      if (rem <= 0) expire(); else tickTimer(rem, totalSecs);
+    }, 1000);
+  }
+};
+
+function tickTimer(rem, total) {
+  const c = document.getElementById('tCircle');
+  if (!c) return;
+  const deg = Math.round(Math.max(0, rem / total) * 360);
+  const col = rem <= 30 ? '#e74c3c' : rem <= 60 ? '#f39c12' : 'var(--grass)';
+  c.style.background = 'conic-gradient(' + col + ' ' + deg + 'deg,rgba(0,0,0,.08) ' + deg + 'deg)';
+  c.textContent = Math.floor(rem / 60) + ':' + String(rem % 60).padStart(2, '0');
+  c.classList.toggle('t-pulse', rem <= 10);
+}
+
+window.closeModal = function() {
+  clearInterval(activeTimer); activeTimer = null;
+  document.getElementById('taskModal').classList.add('hidden');
+};
+window.bgClose = function(e) { if (e.target.id === 'taskModal') window.closeModal(); };
+
+window.requestComplete = function(i) {
+  if (!confirm('Station «' + fillName(gd.tasks[i].title) + '» als erledigt melden? Der Admin muss dies noch bestätigen.')) return;
+  clearInterval(activeTimer); activeTimer = null;
+  createRequest(i);
+  window.closeModal();
+  document.getElementById('prizeIcon').textContent = gd.tasks[i].prizeIcon || '🏆';
+  const dl = drinkSummaryText(gd.tasks[i].prizeDrinks);
+  document.getElementById('prizeTextBox').innerHTML = '<span style="font-size:1.1em;">Prost!</span>' + (dl ? '<br><span style="font-size:0.9em;opacity:0.9;">' + dl + '</span>' : '');
+  document.getElementById('prizeOverlay').classList.remove('hidden');
+};
+
+window.penalizeTask = function(i) {
+  if (!confirm('Strafe für Station «' + fillName(gd.tasks[i].title) + '» akzeptieren?')) return;
+  clearInterval(activeTimer); activeTimer = null;
+  window.closeModal();
+  pendingPenaltyIdx = i;
+  showPenalty(gd.tasks[i].penalty || 'Strafe!', gd.tasks[i].penaltyDrinks);
+};
+
+function unlockNext(i) { if (i + 1 < gd.tasks.length) gd.tasks[i + 1].unlocked = true; }
+
+function launchConfetti() {
+  for (let i = 0; i < 90; i++) {
+    const c = document.createElement('div');
+    c.className = 'confetti';
+    c.style.left = Math.random() * 100 + 'vw';
+    c.style.background = ['#F5B800','#3C8D3A','#C8102E','#0B3D91','#ffffff'][Math.floor(Math.random() * 5)];
+    c.style.animationDelay = Math.random() * 0.8 + 's';
+    document.body.appendChild(c);
+    setTimeout(() => c.remove(), 3500);
+  }
+}
+
+window.closePrize = function() { document.getElementById('prizeOverlay').classList.add('hidden'); renderAll(); };
+
+function showPenalty(text, penDrinks) {
+  document.getElementById('penText').textContent = text;
+  const dl = drinkSummaryText(penDrinks);
+  const el = document.getElementById('penDrinkText');
+  el.textContent = dl;
+  el.classList.toggle('hidden', !dl);
+  document.getElementById('penOverlay').classList.remove('hidden');
+}
+
+window.closePenalty = function() {
+  document.getElementById('penOverlay').classList.add('hidden');
+  if (pendingPenaltyIdx === null) return;
+  const t = gd.tasks[pendingPenaltyIdx];
+  t.penalized = true; t.done = false; t.pendingApproval = false;
+  unlockNext(pendingPenaltyIdx);
+  pendingPenaltyIdx = null;
+  saveData(); renderAll();
+};
+
+function drinkSummaryText(d) {
+  if (!d) return '';
+  return DRINK_TYPES.filter(x => (d[x.id] || 0) > 0).map(x => d[x.id] + 'x ' + x.icon + ' ' + x.label).join(', ');
+}
+
+// ============================================================
+// QUIZ (Golf + Eishockey, gleiche Mechanik)
+// ============================================================
+const Q_TIME = 40;
+let qKey = 'golf', qQ = [], qName1 = '', qName2 = '', qIndex = 0, qTimer = null, qStarted = 0, qTarget = 'p2';
+let qScore1 = { right: 0, bonus: 0 }, qScore2 = { right: 0, bonus: 0 }, qRounds = [];
+const $ = id => document.getElementById(id);
+
+function openQuiz(key) {
+  window.closeModal();
+  qKey = key; qQ = getQuizQuestions(key);
+  const def = QUIZ_DEFS[key];
+  const ov = $('quizOverlay');
+  ov.className = 'quiz-overlay active ' + def.theme;
+  $('quizTitle').textContent = def.title;
+  $('q_setupTitle').textContent = def.icon + ' Bereit? ' + def.intro;
+  $('q_setupName1').textContent = G();
+  $('q_setupName2').textContent = CREW();
+  $('q_setupText').textContent = 'Beide beantworten jede Frage. Eine richtige Antwort gibt 1 Punkt, die schnellere richtige Antwort einen Bonuspunkt. ' + Q_TIME + ' Sekunden pro Frage, ' + qQ.length + ' Fragen.';
+  document.querySelectorAll('.q_total').forEach(e => e.textContent = qQ.length);
+  document.body.style.overflow = 'hidden';
+  qScreen('qs_setup');
+}
+function closeQuiz() { clearInterval(qTimer); $('quizOverlay').classList.remove('active'); document.body.style.overflow = ''; }
+function qScreen(id) { document.querySelectorAll('#quizOverlay .qscreen').forEach(x => x.classList.remove('active')); $(id).classList.add('active'); $('quizOverlay').scrollTop = 0; }
+
+function qStart() {
+  qName1 = G(); qName2 = CREW(); qIndex = 0;
+  qScore1 = { right: 0, bonus: 0 }; qScore2 = { right: 0, bonus: 0 }; qRounds = [];
+  ['q_n11','q_n21','q_resultName1'].forEach(id => $(id).textContent = qName1);
+  ['q_n12','q_n22','q_resultName2'].forEach(id => $(id).textContent = qName2);
+  $('q_turn1').textContent = '🍺 ' + qName1 + ' ist dran!';
+  $('q_turn2').textContent = QUIZ_DEFS[qKey].icon + ' ' + qName2 + ' ist dran!';
+  qScores(); qScreen('qs_q1'); qLoad(1);
+}
+
+function qLoad(player) {
+  const x = qQ[qIndex], s = String(player);
+  $('q_num' + s).textContent = qIndex + 1;
+  $('q_bar' + s).style.width = ((qIndex + 1) / qQ.length * 100) + '%';
+  $('q_text' + s).textContent = x[0];
+  const box = $('q_answers' + s);
+  box.innerHTML = '';
+  x[1].forEach((a, i) => {
+    const b = document.createElement('button');
+    b.className = 'q-answer';
+    b.innerHTML = '<b>' + String.fromCharCode(65 + i) + ')</b> ' + escHtml(a);
+    b.onclick = () => qAnswer(player, i);
+    box.appendChild(b);
+  });
+  $('q_feedback' + s).style.display = 'none';
+  $('q_next' + s).style.display = 'none';
+  if (s === '2') $('q_result').style.display = 'none';
+  qTimerStart(player);
+}
+
+function qTimerStart(player) {
+  clearInterval(qTimer);
+  const s = String(player);
+  let rem = Q_TIME;
+  qStarted = Date.now();
+  $('q_c' + s).textContent = Q_TIME;
+  $('q_t' + s).style.width = '100%';
+  qTimer = setInterval(() => {
+    rem -= .1;
+    $('q_c' + s).textContent = Math.max(0, Math.ceil(rem));
+    $('q_t' + s).style.width = Math.max(0, rem / Q_TIME * 100) + '%';
+    if (rem <= 0) { clearInterval(qTimer); qAnswer(player, -1); }
+  }, 100);
+}
+
+function qAnswer(player, choice) {
+  clearInterval(qTimer);
+  const x = qQ[qIndex], ok = choice === Number(x[2]), s = String(player);
+  const elapsed = choice < 0 ? Q_TIME + 1 : (Date.now() - qStarted) / 1000;
+  $('q_answers' + s).querySelectorAll('button').forEach((b, i) => {
+    b.disabled = true;
+    if (i === Number(x[2])) b.classList.add('correct');
+    if (i === choice && !ok) b.classList.add('selected-wrong');
+  });
+  const r = qRounds[qIndex] = qRounds[qIndex] || {};
+  r['p' + player + 'ok'] = ok; r['p' + player + 't'] = elapsed;
+  if (player === 1) { if (ok) qScore1.right++; }
+  else {
+    if (ok) qScore2.right++;
+    if (r.p1ok && r.p2ok) { if (r.p1t < r.p2t) qScore1.bonus++; else if (r.p2t < r.p1t) qScore2.bonus++; }
+  }
+  const fb = $('q_feedback' + s);
+  fb.style.display = 'block';
+  fb.className = 'q-feedback ' + (choice < 0 ? 'timeout' : ok ? 'ok' : 'bad');
+  fb.textContent = choice < 0 ? '⏰ Zeit abgelaufen!' : ok ? '✅ Richtig – Tor!' : '❌ Falsch – Pfostenschuss!';
+  qScores();
+  if (player === 1) $('q_next1').style.display = 'inline-block';
+  else if (qIndex < qQ.length - 1) $('q_next2').style.display = 'inline-block';
+  else $('q_result').style.display = 'inline-block';
+}
+
+function qScores() {
+  const a = qScore1.right + qScore1.bonus, b = qScore2.right + qScore2.bonus;
+  ['q_p11','q_p21'].forEach(id => $(id).textContent = a);
+  ['q_p12','q_p22'].forEach(id => $(id).textContent = b);
+  ['q_d11','q_d21'].forEach(id => $(id).textContent = qScore1.right + ' richtig · ' + qScore1.bonus + ' schnell');
+  ['q_d12','q_d22'].forEach(id => $(id).textContent = qScore2.right + ' richtig · ' + qScore2.bonus + ' schnell');
+}
+
+function qHandoff(target) {
+  qTarget = target;
+  const n = target === 'p2' ? qName2 : qName1;
+  $('q_hTitle').textContent = 'Gerät an ' + n + ' weitergeben!';
+  $('q_hText').textContent = n + ', bereit für Frage ' + (qIndex + (target === 'p2' ? 1 : 2)) + '?';
+  qScreen('qs_handoff');
+}
+function qReady() {
+  if (qTarget === 'p2') { qScreen('qs_q2'); qLoad(2); }
+  else { qIndex++; qScreen('qs_q1'); qLoad(1); }
+}
+
+function qShowResult() {
+  const a = qScore1.right + qScore1.bonus, b = qScore2.right + qScore2.bonus;
+  const nr = QUIZ_DEFS[qKey].taskIdx + 1;
+  $('q_resultPoints1').textContent = a; $('q_resultPoints2').textContent = b;
+  $('q_resultBox1').classList.toggle('winner', a > b);
+  $('q_resultBox2').classList.toggle('winner', b > a);
+  const action = $('q_resultAction');
+  if (b > a) {
+    $('q_resultTitle').textContent = qName2 + ' gewinnt!';
+    $('q_resultText').textContent = 'Station ' + nr + ' verloren – ab auf die Strafbank!';
+    action.innerHTML = '<button class="q-btn q-btn-red" onclick="window.quizLost()">🚨 Strafe akzeptieren</button>';
+  } else {
+    $('q_resultTitle').textContent = a > b ? qName1 + ' gewinnt!' : 'Unentschieden!';
+    $('q_resultText').textContent = a > b ? 'Station ' + nr + ' ist bestanden!' : 'Unentschieden – Station ' + nr + ' gilt als bestanden.';
+    action.innerHTML = '<button class="q-btn q-btn-gold" onclick="window.quizWon()">📬 Station ' + nr + ' als erledigt melden</button>';
+  }
+  let html = '<div class="q-round-row q-round-head"><div>Frage</div><div>' + escHtml(qName1) + '</div><div>' + escHtml(qName2) + '</div></div>';
+  qRounds.forEach((r, i) => {
+    const b1 = r.p1ok && r.p2ok && r.p1t < r.p2t, b2 = r.p1ok && r.p2ok && r.p2t < r.p1t;
+    const cell = (ok, t, bonus) => '<div class="q-round-player ' + (ok ? 'right' : 'wrong') + (bonus ? ' bonus' : '') + '">' +
+      (ok ? '✅ Richtig' : '❌ Falsch') + '<br><small>' + (t <= Q_TIME ? t.toFixed(1) + ' s' : 'Zeit abgelaufen') + '</small>' + (bonus ? ' ⚡ Bonus' : '') + '</div>';
+    html += '<div class="q-round-row"><div>Frage ' + (i + 1) + '</div>' + cell(r.p1ok, r.p1t, b1) + cell(r.p2ok, r.p2t, b2) + '</div>';
+  });
+  $('q_roundsOverview').innerHTML = html;
+  qScreen('qs_result');
+}
+
+window.quizWon  = function() { closeQuiz(); window.requestComplete(QUIZ_DEFS[qKey].taskIdx); };
+window.quizLost = function() { closeQuiz(); window.penalizeTask(QUIZ_DEFS[qKey].taskIdx); };
+window.openQuiz = openQuiz; window.closeQuiz = closeQuiz; window.qStart = qStart;
+window.qHandoff = qHandoff; window.qReady = qReady; window.qShowResult = qShowResult;
+
+// ============================================================
+// ADMIN
+// ============================================================
+window.checkLogin = function() {
+  if ($('adminPwInput').value === gd.password) {
+    $('loginBox').classList.add('hidden');
+    $('adminPanel').classList.remove('hidden');
+    window.switchTab('Requests');
+  } else $('loginErr').textContent = '❌ Falsches Passwort';
+};
+window.adminLogout = function() {
+  $('loginBox').classList.remove('hidden');
+  $('adminPanel').classList.add('hidden');
+  $('adminPwInput').value = ''; $('loginErr').textContent = '';
+};
+
+const TABS = ['Requests','Intro','Levels','Quiz','Drinks','Mini','Settings','Reset'];
+window.switchTab = function(tab) {
+  TABS.forEach(t => { $('adminTab' + t).classList.add('hidden'); $('tabBtn' + t).style.opacity = '0.5'; });
+  $('adminTab' + tab).classList.remove('hidden');
+  $('tabBtn' + tab).style.opacity = '1';
+  ({ Requests: renderAdminRequests, Intro: renderAdminIntro, Levels: renderAdminLevels, Quiz: renderAdminQuiz,
+     Drinks: renderAdminDrinks, Mini: renderAdminMiniChallenges, Settings: renderAdminSettings, Reset: renderAdminReset })[tab]();
+};
+
+function renderAdminRequests() {
+  const c = $('adminRequestList');
+  const reqs = openRequests();
+  if (!reqs.length) { c.innerHTML = '<div style="color:#bbb;font-size:13px;text-align:center;padding:10px 0;">Keine offenen Anfragen.</div>'; updateReqBadge(); return; }
+  c.innerHTML = reqs.map(([key, r]) =>
+    '<div class="req-card"><h4>📬 Station ' + (r.taskIdx + 1) + ': ' + escHtml(fillName(r.taskTitle)) + '</h4>' +
+    '<div style="font-size:12px;color:#999;margin-bottom:10px;">Gemeldet um ' + new Date(r.timestamp).toLocaleTimeString('de-CH', { hour: '2-digit', minute: '2-digit' }) + '</div>' +
+    '<div style="display:flex;gap:8px;flex-wrap:wrap;"><button class="btn btn-green btn-sm" onclick="window.adminApprove(\'' + key + '\')">✅ Genehmigen</button>' +
+    '<button class="btn btn-red btn-sm" onclick="window.adminReject(\'' + key + '\')">❌ Ablehnen</button></div></div>').join('');
+  updateReqBadge();
+}
+
+window.adminApprove = function(key) {
+  const r = gd.requests[key];
+  if (!r || !confirm('Station «' + fillName(r.taskTitle) + '» genehmigen?')) return;
+  const prize = drinkSummaryText(gd.tasks[r.taskIdx].prizeDrinks);
+  approveRequest(key);
+  renderAdminRequests();
+  alert('✅ Genehmigt! Preis: ' + (prize || 'Prost!'));
+};
+window.adminReject = function(key) {
+  const r = gd.requests[key];
+  if (!r || !confirm('Anfrage für «' + fillName(r.taskTitle) + '» ablehnen?')) return;
+  rejectRequest(key);
+  renderAdminRequests();
+};
+
+function renderAdminIntro() { $('adminIntroTA').value = gd.intro; $('adminIntroImg').value = gd.introImage || ''; }
+window.saveIntro = function() {
+  gd.intro = $('adminIntroTA').value;
+  gd.introImage = $('adminIntroImg').value.trim();
+  saveData(); renderIntro(); alert('✅ Intro gespeichert!');
+};
+
+function buildDrinkGrid(prefix, i, d, isPenalty) {
+  const types = isPenalty ? DRINK_TYPES.filter(x => x.id === 'alkoholfrei' || x.id === 'wasser') : DRINK_TYPES;
+  return '<div class="' + (isPenalty ? 'penalty-drink-grid' : 'drink-admin-grid') + '">' + types.map(x =>
+    '<div class="' + (isPenalty ? 'penalty-drink-item' : 'drink-admin-item') + '"><div style="font-size:1.5rem;">' + x.icon + '</div><label>' + x.label + '</label>' +
+    '<input type="number" min="0" max="9" value="' + (d[x.id] || 0) + '" id="' + prefix + '_' + x.id + '_' + i + '"></div>').join('') + '</div>';
+}
+function readDrinkGrid(prefix, i) {
+  const o = emptyDrinks();
+  DRINK_TYPES.forEach(x => { const el = $(prefix + '_' + x.id + '_' + i); if (el) o[x.id] = parseInt(el.value, 10) || 0; });
+  return o;
+}
+
+function renderAdminLevels() {
+  const c = $('adminLevelList');
+  c.innerHTML = '';
+  gd.tasks.forEach((t, i) => {
+    const st = t.penalized ? '<span style="font-size:11px;color:var(--red);margin-left:8px;">🚨 Strafe</span>'
+      : t.done ? '<span style="font-size:11px;color:var(--grass);margin-left:8px;">✅ Erledigt</span>'
+      : t.pendingApproval ? '<span style="font-size:11px;color:#e67e22;margin-left:8px;">⏳ Anfrage offen</span>'
+      : '<span style="font-size:11px;color:#aaa;margin-left:8px;">○ Offen</span>';
+    const qk = quizKeyForTask(i);
+    const d = document.createElement('div');
+    d.className = 'acard';
+    d.innerHTML =
+      '<div style="font-weight:800;font-size:14px;margin-bottom:10px;">' + NODE_ICONS[i] + ' Station ' + (i + 1) + st + (qk ? ' <span style="font-size:11px;color:var(--rink);">(' + QUIZ_DEFS[qk].icon + ' Quiz – Fragen im Tab «Quiz»)</span>' : '') + '</div>' +
+      '<label class="al">Titel:</label><input type="text" class="ai" id="at_' + i + '" value="' + escHtml(t.title) + '">' +
+      '<label class="al">Beschreibung:</label><textarea class="ai" id="ad_' + i + '" rows="3">' + escHtml(t.desc) + '</textarea>' +
+      '<label class="al">Coverbild URL:</label><input type="text" class="ai" id="ac_' + i + '" value="' + escHtml(t.cover) + '" placeholder="bilder/station1.jpg">' +
+      '<label class="al">Preis-Icon:</label><input type="text" class="ai" id="api_' + i + '" value="' + escHtml(t.prizeIcon) + '" style="width:80px;">' +
+      '<label class="al">🍺 Preis-Getränke:</label>' + buildDrinkGrid('pd', i, t.prizeDrinks, false) +
+      '<label class="al" style="margin-top:14px;">Strafe-Text:</label><input type="text" class="ai" id="apen_' + i + '" value="' + escHtml(t.penalty) + '">' +
+      '<label class="al">🚨 Strafe-Getränke:</label>' + buildDrinkGrid('ppd', i, t.penaltyDrinks, true) +
+      '<label class="al" style="margin-top:14px;">Zeitlimit (Min., 0 = kein):</label><input type="number" class="ai" id="atm_' + i + '" value="' + (t.deadlineMins || 0) + '" min="0" style="width:100px;">' +
+      '<div class="alrow"><button class="btn btn-green btn-sm" onclick="window.saveLevel(' + i + ')">💾 Speichern</button>' +
+      (t.pendingApproval ? '<button class="btn btn-orange btn-sm" onclick="window.adminApproveFromLevel(' + i + ')">✅ Anfrage genehmigen</button>' : '') + '</div>';
+    c.appendChild(d);
+  });
+}
+
+window.saveLevel = function(i) {
+  const t = gd.tasks[i];
+  t.title = $('at_' + i).value;
+  t.desc = $('ad_' + i).value;
+  t.cover = $('ac_' + i).value.trim();
+  t.prizeIcon = $('api_' + i).value;
+  t.prizeDrinks = readDrinkGrid('pd', i);
+  t.penalty = $('apen_' + i).value;
+  t.penaltyDrinks = readDrinkGrid('ppd', i);
+  t.deadlineMins = parseInt($('atm_' + i).value, 10) || 0;
+  saveData(); renderAll(); alert('✅ Station ' + (i + 1) + ' gespeichert!');
+};
+
+window.adminApproveFromLevel = function(i) {
+  const key = Object.entries(gd.requests || {}).find(([, r]) => r.taskIdx === i)?.[0];
+  if (key) { window.adminApprove(key); return; }
+  gd.tasks[i].done = true; gd.tasks[i].pendingApproval = false;
+  unlockNext(i); saveData(); renderAdminLevels(); renderAll();
+};
+
+// ── Quiz-Editor ──
+function renderAdminQuiz() {
+  $('adminQuizList').innerHTML = Object.keys(QUIZ_DEFS).map(key => {
+    const def = QUIZ_DEFS[key], qs = getQuizQuestions(key);
+    return '<div class="acard quiz-admin ' + def.theme + '"><h2>' + def.title + ' – ' + qs.length + ' Fragen</h2>' +
+      '<p style="font-size:12px;color:#777;">Fragen und Antworten bearbeiten. Die richtige Antwort wird als Buchstabe A–D gespeichert.</p>' +
+      qs.map((q, idx) => '<div style="border-top:1px solid rgba(0,0,0,.1);padding:12px 0;"><strong style="font-size:13px;">Frage ' + (idx + 1) + '</strong>' +
+        '<label class="al">Frage:</label><textarea class="ai" id="qq_' + key + '_' + idx + '">' + escHtml(q[0]) + '</textarea>' +
+        q[1].map((a, j) => '<label class="al">Antwort ' + String.fromCharCode(65 + j) + ':</label><input class="ai" id="qa_' + key + '_' + idx + '_' + j + '" value="' + escHtml(a) + '">').join('') +
+        '<label class="al">Richtige Antwort:</label><select class="ai" id="qc_' + key + '_' + idx + '">' +
+        [0,1,2,3].map(n => '<option value="' + n + '"' + (Number(q[2]) === n ? ' selected' : '') + '>' + String.fromCharCode(65 + n) + '</option>').join('') +
+        '</select></div>').join('') +
+      '<div class="alrow"><button class="btn btn-green" onclick="window.saveQuizQuestions(\'' + key + '\')">💾 ' + def.icon + ' Quiz speichern</button>' +
+      '<button class="btn btn-gray btn-sm" onclick="window.resetQuizQuestions(\'' + key + '\')">↩️ Standardfragen</button></div></div>';
+  }).join('');
+}
+
+window.saveQuizQuestions = function(key) {
+  const qs = getQuizQuestions(key).map((q, idx) => [
+    $('qq_' + key + '_' + idx).value,
+    [0,1,2,3].map(j => $('qa_' + key + '_' + idx + '_' + j).value),
+    parseInt($('qc_' + key + '_' + idx).value, 10)
+  ]);
+  if (!gd.quizzes) gd.quizzes = {};
+  gd.quizzes[key] = qs;
+  saveData(); alert('✅ ' + QUIZ_DEFS[key].title + ' gespeichert!');
+};
+window.resetQuizQuestions = function(key) {
+  if (!confirm('Standardfragen für ' + QUIZ_DEFS[key].title + ' wiederherstellen?')) return;
+  if (gd.quizzes) delete gd.quizzes[key];
+  saveData(); renderAdminQuiz();
+};
+
+// ── Einstellungen ──
+function renderAdminSettings() {
+  const cfg = gd.bonusCfg || DEFAULT_BONUS;
+  $('settingGroom').value = gd.groomName || '';
+  $('settingCrew').value = gd.crewName || '';
+  $('settingBonusTitle').value = cfg.title;
+  $('settingBonusDesc').value = cfg.desc;
+  $('settingBonusRules').value = cfg.rules;
+  $('settingBonusDone').value = cfg.done;
+}
+window.saveSettings = function() {
+  gd.groomName = $('settingGroom').value.trim() || 'Bräutigam';
+  gd.crewName = $('settingCrew').value.trim() || 'Die Polter-Crew';
+  gd.bonusCfg = { title: $('settingBonusTitle').value, desc: $('settingBonusDesc').value, rules: $('settingBonusRules').value, done: $('settingBonusDone').value };
+  const pw = $('settingPw').value.trim();
+  if (pw) gd.password = pw;
+  saveData(); renderAll();
+  $('settingPw').value = '';
+  alert('✅ Einstellungen gespeichert!');
+};
+
+// ── Getränke-Admin ──
+function renderAdminDrinks() {
+  const earned = calcEarnedDrinks();
+  const consumed = normalizeConsumedDrinks(gd.consumed, earned);
+  $('adminDrinksList').innerHTML = DRINK_TYPES.map(d =>
+    '<div class="consumed-admin-row"><div><strong>' + d.icon + ' ' + d.label + '</strong><div class="admin-drink-info" style="font-size:11px;color:#888;margin-top:2px;">Erspielt: ' + earned[d.id] + ' · Verfügbar: ' + (earned[d.id] - consumed[d.id]) + '</div></div>' +
+    '<div class="consumed-admin-controls"><button type="button" onclick="window.adminDrinkAdj(\'' + d.id + '\',-1)">−</button><span class="cnt" id="cadm_' + d.id + '">' + consumed[d.id] + '</span><button type="button" onclick="window.adminDrinkAdj(\'' + d.id + '\',1)">+</button></div></div>').join('');
+  const adj = gd.manualDrinkAdjustments || emptyDrinks();
+  $('adminManualDrinkList').innerHTML = DRINK_TYPES.map(d =>
+    '<div class="consumed-admin-row"><div><strong>' + d.icon + ' ' + d.label + '</strong></div>' +
+    '<div class="consumed-admin-controls"><button type="button" onclick="window.adminManualDrinkAdj(\'' + d.id + '\',-1)">−</button><span class="cnt" id="madj_' + d.id + '">' + (parseInt(adj[d.id], 10) || 0) + '</span><button type="button" onclick="window.adminManualDrinkAdj(\'' + d.id + '\',1)">+</button></div></div>').join('');
+}
+
+window.adminDrinkAdj = function(id, delta) {
+  const el = $('cadm_' + id);
+  const max = calcEarnedDrinks()[id] || 0;
+  const next = Math.min(max, Math.max(0, (parseInt(el.textContent, 10) || 0) + delta));
+  el.textContent = next;
+  const info = el.closest('.consumed-admin-row').querySelector('.admin-drink-info');
+  if (info) info.textContent = 'Erspielt: ' + max + ' · Verfügbar: ' + (max - next);
+};
+window.adminManualDrinkAdj = function(id, delta) {
+  const el = $('madj_' + id);
+  el.textContent = (parseInt(el.textContent, 10) || 0) + delta;
+};
+
+window.saveAdminDrinks = async function() {
+  const earned = calcEarnedDrinks(), next = emptyDrinks();
+  DRINK_TYPES.forEach(d => { next[d.id] = Math.min(Math.max(0, parseInt($('cadm_' + d.id).textContent, 10) || 0), earned[d.id]); });
+  try {
+    await set(ref(db, DB_PATH + '/consumed'), next);
+    gd.consumed = next;
+    renderDrinks(); renderAdminDrinks();
+    alert('✅ Getränke aktualisiert.');
+  } catch (e) { alert('❌ Die Getränke konnten nicht gespeichert werden.'); }
+};
+
+window.saveManualDrinkAdjustments = async function() {
+  const next = emptyDrinks();
+  DRINK_TYPES.forEach(d => { next[d.id] = parseInt($('madj_' + d.id).textContent, 10) || 0; });
+  const prev = firebaseSafeData();
+  try {
+    gd.manualDrinkAdjustments = next;
+    gd.consumed = normalizeConsumedDrinks(gd.consumed, calcEarnedDrinks());
+    await saveData();
+    alert('✅ Manuelle Korrektur gespeichert.');
+  } catch (e) { mergeFromFirebase(prev); alert('❌ Die Korrektur konnte nicht gespeichert werden.'); }
+  renderAll(); renderAdminDrinks();
+};
+
+// ── Reset ──
+function renderAdminReset() {
+  $('adminResetList').innerHTML = gd.tasks.map((t, i) => {
+    const lbl = t.penalized ? '<span style="font-size:12px;color:var(--red);">🚨 Strafe</span>'
+      : t.done ? '<span style="font-size:12px;color:var(--grass);">✅ Erledigt</span>'
+      : t.pendingApproval ? '<span style="font-size:12px;color:#e67e22;">⏳ Anfrage</span>'
+      : '<span style="font-size:12px;color:#bbb;">○ Offen</span>';
+    return '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid rgba(0,0,0,.07);">' +
+      '<span style="font-size:13px;font-weight:700;">' + NODE_ICONS[i] + ' ' + (i + 1) + '. ' + escHtml(fillName(t.title)) + '</span>' +
+      '<div style="display:flex;align-items:center;gap:8px;">' + lbl +
+      ((t.done || t.penalized || t.pendingApproval) ? '<button class="btn btn-red btn-sm" onclick="window.adminReset(' + i + ')">🔄 Reset</button>' : '') + '</div></div>';
+  }).join('');
+  updateBonusUnlock();
+  $('adminBonusResetInfo').textContent = 'Aktueller Status: ' + (gd.bonus.completed ? '✅ Geschafft' : gd.bonus.skipped ? '⏭️ Übersprungen'
+    : gd.bonus.unlocked ? '🏆 Freigeschaltet, noch nicht entschieden' : '🔒 Noch nicht freigeschaltet (< 7 erfolgreiche Stationen)');
+}
+
+window.adminReset = async function(i) {
+  const task = gd.tasks[i];
+  if (!task || !confirm('Station ' + (i + 1) + ' «' + fillName(task.title) + '» wirklich zurücksetzen?')) return;
+  const prev = firebaseSafeData();
+  try {
+    task.done = false; task.penalized = false; task.pendingApproval = false; task.started = false;
+    delete task.startedAt;
+    if (i === 0) {
+      gameStartTime = null; gd.gameStartTime = null; gd.miniPeriodStart = null;
+      gd.miniChallenges = []; gd.miniNextId = 1; gd.miniChallengeShots = 0;
+    }
+    Object.keys(gd.requests || {}).forEach(k => { if (Number(gd.requests[k].taskIdx) === i) delete gd.requests[k]; });
+    for (let j = i + 1; j < gd.tasks.length; j++) {
+      if (!gd.tasks[j].done && !gd.tasks[j].penalized) { gd.tasks[j].pendingApproval = false; gd.tasks[j].started = false; delete gd.tasks[j].startedAt; }
+    }
+    gd.tasks.forEach(t => t.unlocked = false);
+    gd.tasks[0].unlocked = true;
+    for (let j = 1; j < gd.tasks.length; j++) {
+      const p = gd.tasks[j - 1];
+      gd.tasks[j].unlocked = Boolean(p.unlocked && (p.done || p.penalized));
+    }
+    gd.consumed = normalizeConsumedDrinks(gd.consumed, calcEarnedDrinks());
+    await saveData();
+    renderAll(); renderAdminReset();
+    alert('✅ Station ' + (i + 1) + ' wurde zurückgesetzt.');
+  } catch (e) {
+    mergeFromFirebase(prev); renderAll(); renderAdminReset();
+    alert('❌ Reset konnte nicht gespeichert werden.');
+  }
+};
+
+window.resetBonusTask = async function() {
+  if (!confirm('Bonus-Status wirklich zurücksetzen?')) return;
+  gd.bonus.completed = false; gd.bonus.skipped = false; gd.bonus.shotsAwarded = 0;
+  try { await saveData(); alert('✅ Bonus-Aufgabe wurde zurückgesetzt.'); }
+  catch (e) { alert('❌ Konnte nicht gespeichert werden.'); }
+  renderAll(); renderAdminReset();
+};
+
+function escHtml(str) {
+  return String(str ?? '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+// ============================================================
+// SPIELZEIT
+// ============================================================
+async function startGameClock() {
+  if (gameStartTime || gd.gameStartTime) { gameStartTime = Number(gameStartTime || gd.gameStartTime); return; }
+  gameStartTime = Date.now();
+  gd.gameStartTime = gameStartTime;
+  gd.miniPeriodStart = gameStartTime;
+  try { await saveData(); }
+  catch (e) { gameStartTime = null; gd.gameStartTime = null; gd.miniPeriodStart = null; }
+}
+
+function updateProgressClock() {
+  const el = $('progressClock');
+  if (!gameStartTime) { el.textContent = '⏱ Die Spielzeit startet mit dem ersten Bully (Station 1)'; return; }
+  const diff = Math.max(0, Math.floor((Date.now() - gameStartTime) / 1000));
+  el.textContent = '⏱ Spielzeit: ' + Math.floor(diff / 60) + ':' + String(diff % 60).padStart(2, '0') + ' Minuten';
+  renderMiniChallenges();
+}
+
+updateProgressClock();
+setInterval(updateProgressClock, 1000);
+renderAll();
+</script>
+</body>
+</html>
